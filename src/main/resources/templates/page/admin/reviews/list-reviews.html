@@ -1,466 +1,151 @@
+<!-- ====================== list-reviews.html (Admin - Hoàn chỉnh) ====================== -->
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đánh giá - Hanoi Aptech Bookstore</title>
-
-    <!-- JS & CSS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script th:src="@{/js/script_admin_dashboard.js}"></script>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/admin_style.css}">
-
-    <style>
-        .wrapper {
-            display: flex;
-        }
-        #content {
-            flex: 1;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-        .table th, .table td {
-            vertical-align: middle;
-        }
-        .topbar {
-            background-color: #fff;
-            padding: 10px 20px;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .stats-card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        .rating-stars {
-            color: #ffc107;
-        }
-        .review-comment {
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .book-cover {
-            width: 40px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-    </style>
 </head>
 <body class="bg-light">
-
 <div class="wrapper">
-    <!-- Sidebar -->
     <div th:replace="~{fragments/admin_sidebar :: sidebar}"></div>
-
-    <!-- Content -->
     <div id="content">
-        <!-- Topbar -->
-        <div class="topbar">
-            <span th:text="${#authentication.name}">admin@gmail.com</span>
-            <form th:action="@{/logout}" method="post" class="d-inline">
-                <button type="submit" class="btn btn-outline-danger">
-                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                </button>
+        <div class="topbar d-flex justify-content-between align-items-center px-3 py-2">
+            <span th:text="${#authentication.name}" class="fw-bold">admin@gmail.com</span>
+            <form th:action="@{/logout}" method="post">
+                <button class="btn btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
             </form>
         </div>
 
-        <!-- Main Content -->
         <div class="container-fluid mt-4">
-            <!-- Page Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="text-primary mb-0">⭐ Quản lý đánh giá</h2>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Dashboard</a></li>
-                            <li class="breadcrumb-item active">Đánh giá</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
+            <h2 class="text-primary mb-3">⭐ Quản lý đánh giá</h2>
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-            <!-- Stats Cards Row -->
-            <div class="row g-4 mb-4">
-                <div class="col-xl-3 col-md-6">
-                    <div class="stats-card card bg-primary text-white h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="stat-number">1,247</div>
-                                    <div class="stat-label">TỔNG ĐÁNH GIÁ</div>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-star fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <form class="row g-3 mb-3" method="get" th:action="@{/admin/reviews}">
+                <div class="col-md-4">
+                    <input name="search" class="form-control" placeholder="Tìm kiếm..." th:value="${param.search}">
                 </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="stats-card card bg-success text-white h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="stat-number">4.2</div>
-                                    <div class="stat-label">ĐIỂM TRUNG BÌNH</div>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-chart-line fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <select name="rating" class="form-select" th:value="${param.rating}">
+                        <option value="">Tất cả</option>
+                        <option value="5">5 sao</option>
+                        <option value="4">4 sao</option>
+                        <option value="3">3 sao</option>
+                        <option value="2">2 sao</option>
+                        <option value="1">1 sao</option>
+                    </select>
                 </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="stats-card card bg-warning text-white h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="stat-number">856</div>
-                                    <div class="stat-label">ĐÁNH GIÁ 5 SAO</div>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-thumbs-up fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <select name="sort" class="form-select" th:value="${param.sort}">
+                        <option value="newest">Mới nhất</option>
+                        <option value="oldest">Cũ nhất</option>
+                        <option value="highest">Điểm cao nhất</option>
+                        <option value="lowest">Điểm thấp nhất</option>
+                    </select>
                 </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="stats-card card bg-danger text-white h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="stat-number">23</div>
-                                    <div class="stat-label">ĐÁNH GIÁ XẤU</div>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-thumbs-down fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="submit">Lọc</button>
                 </div>
-            </div>
+            </form>
 
-            <!-- Search & Filters Card -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form th:action="@{/admin/reviews}" method="get" class="row g-3">
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" name="search"
-                                       placeholder="Tìm kiếm theo sách, người dùng..." th:value="${param.search}">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" name="rating">
-                                <option value="">Tất cả đánh giá</option>
-                                <option value="5">5 sao</option>
-                                <option value="4">4 sao</option>
-                                <option value="3">3 sao</option>
-                                <option value="2">2 sao</option>
-                                <option value="1">1 sao</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" name="sort">
-                                <option value="newest">Mới nhất</option>
-                                <option value="oldest">Cũ nhất</option>
-                                <option value="highest">Điểm cao nhất</option>
-                                <option value="lowest">Điểm thấp nhất</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-filter me-2"></i>Lọc
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
-            <!-- Reviews Table -->
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="table-light text-center">
-                    <tr>
-                        <th>ID</th>
-                        <th>Người dùng</th>
-                        <th>Sách</th>
-                        <th>Đánh giá</th>
-                        <th>Bình luận</th>
-                        <th>Ngày tạo</th>
-                        <th>Cập nhật</th>
-                        <th>Hành động</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- Sample data -->
-                    <tr>
-                        <td class="text-center">1</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="/placeholder.svg?height=35&width=35" class="user-avatar me-2" alt="Avatar">
-                                <div>
-                                    <div class="fw-bold">Nguyễn Văn A</div>
-                                    <small class="text-muted">nguyenvana@email.com</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="/placeholder.svg?height=60&width=40" class="book-cover me-2" alt="Book cover">
-                                <div>
-                                    <div class="fw-bold">Lập trình PHP căn bản</div>
-                                    <small class="text-muted">Nguyễn Văn B</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="rating-stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <div><small>5/5</small></div>
-                        </td>
-                        <td>
-                            <div class="review-comment" title="Sách rất hay và dễ hiểu, phù hợp cho người mới bắt đầu học lập trình PHP. Tác giả viết rất chi tiết và có nhiều ví dụ thực tế.">
-                                Sách rất hay và dễ hiểu, phù hợp cho người mới bắt đầu học lập trình PHP...
-                            </div>
-                        </td>
-                        <td class="text-center">15/01/2024</td>
-                        <td class="text-center">15/01/2024</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewReviewModal">
-                                <i class="fas fa-eye"></i>
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Người dùng</th>
+                    <th>Sách</th>
+                    <th>Đánh giá</th>
+                    <th>Bình luận</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${reviews}">
+                    <td th:text="${r.id}"></td>
+                    <td>
+                        <strong th:text="${r.user.fullName}"></strong><br>
+                        <small th:text="${r.user.email}" class="text-muted"></small>
+                    </td>
+                    <td>
+                        <strong th:text="${r.book.title}"></strong><br>
+                        <small th:text="${r.book.author}" class="text-muted"></small>
+                    </td>
+                    <td>
+                        <div class="rating-stars">
+                            <i th:each="i : ${#numbers.sequence(1,5)}" th:class="${i <= r.rating ? 'fas' : 'far'} + ' fa-star text-warning'"></i>
+                        </div>
+                        <small class="text-muted" th:text="${r.rating + '/5'}"></small>
+                    </td>
+                    <td th:text="${r.comment}"></td>
+                    <td th:text="${#dates.format(r.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+                    <td>
+                        <button class="btn btn-info btn-sm" th:attr="data-id=${r.id}" data-bs-toggle="modal" data-bs-target="#viewReviewModal" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <form th:action="@{/admin/reviews/delete/{id}(id=${r.id})}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa?');">
+                            <button class="btn btn-danger btn-sm" title="Xóa">
+                                <i class="fas fa-trash"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?');">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-center">2</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="/placeholder.svg?height=35&width=35" class="user-avatar me-2" alt="Avatar">
-                                <div>
-                                    <div class="fw-bold">Trần Thị B</div>
-                                    <small class="text-muted">tranthib@email.com</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="/placeholder.svg?height=60&width=40" class="book-cover me-2" alt="Book cover">
-                                <div>
-                                    <div class="fw-bold">PHP nâng cao</div>
-                                    <small class="text-muted">Trần Thị C</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="rating-stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <div><small>4/5</small></div>
-                        </td>
-                        <td>
-                            <div class="review-comment" title="Nội dung khá hay nhưng hơi khó hiểu với người mới. Cần có kiến thức nền tảng vững chắc.">
-                                Nội dung khá hay nhưng hơi khó hiểu với người mới...
-                            </div>
-                        </td>
-                        <td class="text-center">10/03/2024</td>
-                        <td class="text-center">12/03/2024</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewReviewModal">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?');">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-center">3</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="/placeholder.svg?height=35&width=35" class="user-avatar me-2" alt="Avatar">
-                                <div>
-                                    <div class="fw-bold">Lê Văn C</div>
-                                    <small class="text-muted">levanc@email.com</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="/placeholder.svg?height=60&width=40" class="book-cover me-2" alt="Book cover">
-                                <div>
-                                    <div class="fw-bold">Java cho người mới bắt đầu</div>
-                                    <small class="text-muted">Lê Văn D</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="rating-stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <div><small>2/5</small></div>
-                        </td>
-                        <td>
-                            <div class="review-comment" title="Sách viết không rõ ràng, nhiều lỗi chính tả. Không phù hợp cho người mới học.">
-                                Sách viết không rõ ràng, nhiều lỗi chính tả...
-                            </div>
-                        </td>
-                        <td class="text-center">20/04/2024</td>
-                        <td class="text-center">20/04/2024</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewReviewModal">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?');">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <nav class="mt-3">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#">
-                            <i class="fas fa-chevron-left"></i>
-                        </a>
-                    </li>
-                    <li class="page-item active">
-                        <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<!-- View Review Modal -->
+<!-- Modal Chi tiết -->
 <div class="modal fade" id="viewReviewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Chi tiết đánh giá</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Thông tin người dùng</h6>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="/placeholder.svg?height=50&width=50" class="rounded-circle me-3" alt="Avatar">
-                            <div>
-                                <div class="fw-bold">Nguyễn Văn A</div>
-                                <small class="text-muted">nguyenvana@email.com</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Thông tin sách</h6>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="/placeholder.svg?height=80&width=60" class="me-3" alt="Book cover">
-                            <div>
-                                <div class="fw-bold">Lập trình PHP căn bản</div>
-                                <small class="text-muted">Tác giả: Nguyễn Văn B</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Đánh giá</h6>
-                        <div class="rating-stars fs-4 mb-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <span class="badge bg-success">5/5 sao</span>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Thời gian</h6>
-                        <p><strong>Tạo:</strong> 15/01/2024 10:30</p>
-                        <p><strong>Cập nhật:</strong> 15/01/2024 10:30</p>
-                    </div>
-                </div>
-                <hr>
-                <h6>Bình luận</h6>
-                <p class="border p-3 rounded bg-light">
-                    Sách rất hay và dễ hiểu, phù hợp cho người mới bắt đầu học lập trình PHP.
-                    Tác giả viết rất chi tiết và có nhiều ví dụ thực tế. Tôi đã học được rất nhiều
-                    kiến thức bổ ích từ cuốn sách này. Rất khuyến khích mọi người nên đọc.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-danger">Xóa đánh giá</button>
+                <p><strong>Người dùng:</strong> <span data-role="userName"></span> (<span data-role="userEmail"></span>)</p>
+                <p><strong>Sách:</strong> <span data-role="bookTitle"></span> - <span data-role="bookAuthor"></span></p>
+                <div class="rating-stars" data-role="ratingStars"></div>
+                <span class="badge bg-success" data-role="ratingValue"></span>
+                <p><strong>Thời gian:</strong> <span data-role="createdAt"></span> - Cập nhật: <span data-role="updatedAt"></span></p>
+                <p><strong>Bình luận:</strong></p>
+                <p class="border p-2 bg-light" data-role="comment"></p>
             </div>
         </div>
     </div>
 </div>
 
-<script th:src="@{/js/script_admin_reviews.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.btn-info[data-id]').forEach(button => {
+            button.addEventListener('click', function () {
+                const id = this.getAttribute('data-id');
+                fetch(`/admin/reviews/detail/${id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        document.querySelector('[data-role="userName"]').textContent = data.user.fullName;
+                        document.querySelector('[data-role="userEmail"]').textContent = data.user.email;
+                        document.querySelector('[data-role="bookTitle"]').textContent = data.book.title;
+                        document.querySelector('[data-role="bookAuthor"]').textContent = data.book.author;
+                        const stars = [...Array(5)].map((_, i) => `<i class="${i < data.rating ? 'fas' : 'far'} fa-star text-warning"></i>`).join('');
+                        document.querySelector('[data-role="ratingStars"]').innerHTML = stars;
+                        document.querySelector('[data-role="ratingValue"]').textContent = `${data.rating}/5 sao`;
+                        document.querySelector('[data-role="createdAt"]').textContent = data.createdAt;
+                        document.querySelector('[data-role="updatedAt"]').textContent = data.updatedAt ?? '-';
+                        document.querySelector('[data-role="comment"]').textContent = data.comment;
+                    })
+                    .catch(() => alert('Lỗi tải chi tiết đánh giá.'));
+            });
+        });
+    });
+</script>
 </body>
 </html>

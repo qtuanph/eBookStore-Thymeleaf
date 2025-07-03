@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Arrays;
 
@@ -35,8 +36,17 @@ public class AdminReviewController {
                               @RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "10") int size,
                               Model model) {
+        Integer ratingValue = null;
+        try {
+            if (rating != null && !rating.isEmpty()) {
+                ratingValue = Integer.parseInt(rating);
+            }
+        } catch (NumberFormatException e) {
+            model.addAttribute("error", "Giá trị rating không hợp lệ");
+            return "page/admin/reviews/list-reviews";
+        }
         Pageable pageable = PageRequest.of(page, size);
-        Page<Review> reviewsPage = reviewService.getReviewsByRatingAndSort(rating != null ? Integer.parseInt(rating) : null, sort, pageable);
+        Page<Review> reviewsPage = reviewService.getReviewsByRatingAndSort(ratingValue, sort, pageable);
         model.addAttribute("reviews", reviewsPage);
         model.addAttribute("ratings", Arrays.asList("1", "2", "3", "4", "5"));
         model.addAttribute("sortOptions", Arrays.asList("newest", "oldest", "highest", "lowest"));
@@ -57,9 +67,20 @@ public class AdminReviewController {
         return "page/admin/reviews/view-review"; // Sửa đường dẫn trả về
     }
 
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String deleteReview(@PathVariable Integer id) {
         reviewService.deleteReview(id);
         return "redirect:/admin/reviews?success=deleted";
     }
+    @PostMapping("/admin/reviews/delete/{id}")
+    public String deleteReview(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            reviewService.deleteById(Math.toIntExact(id));
+            redirectAttributes.addFlashAttribute("success", "Xóa đánh giá thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Xóa đánh giá thất bại.");
+        }
+        return "redirect:/admin/reviews";
+    }
+
 }

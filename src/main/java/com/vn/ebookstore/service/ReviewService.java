@@ -18,4 +18,8 @@ public interface ReviewService {
     // Thêm phương thức mới
     Page<Review> getAllReviews(Pageable pageable);
     Page<Review> getReviewsByRatingAndSort(Integer rating, String sort, Pageable pageable);
+
+    void deleteById(Integer id);
+    List<Review> findWithFilters(String search, Integer rating, String sort);
+
 }

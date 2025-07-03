@@ -11,8 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -93,4 +95,44 @@ public class ReviewServiceImpl implements ReviewService {
         }
         return getAllReviews(pageable);
     }
+
+    @Override
+    public void deleteById(Integer id) {
+        reviewRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Review> findWithFilters(String search, Integer rating, String sort) {
+        List<Review> all = reviewRepository.findAll(); // hoặc custom query nếu muốn
+
+        // Lọc theo từ khoá
+        if (search != null && !search.isBlank()) {
+            all = all.stream().filter(r ->
+                    r.getUser().getFullName().toLowerCase().contains(search.toLowerCase())
+                            || r.getBook().getTitle().toLowerCase().contains(search.toLowerCase())
+            ).collect(Collectors.toList());
+        }
+
+        // Lọc theo số sao
+        if (rating != null) {
+            all = all.stream().filter(r -> r.getRating() == rating).collect(Collectors.toList());
+        }
+
+        // Sắp xếp
+        Comparator<Review> comparator = Comparator.comparing(Review::getCreatedAt);
+        if (sort.equals("oldest")) {
+            // giữ nguyên
+        } else if (sort.equals("highest")) {
+            comparator = Comparator.comparing(Review::getRating).reversed();
+        } else if (sort.equals("lowest")) {
+            comparator = Comparator.comparing(Review::getRating);
+        } else {
+            comparator = Comparator.comparing(Review::getCreatedAt).reversed(); // newest
+        }
+        all.sort(comparator);
+
+        return all;
+    }
+
+
 }

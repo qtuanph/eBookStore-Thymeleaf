@@ -6,11 +6,15 @@ import com.vn.ebookstore.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -99,8 +103,14 @@ public class CouponServiceImpl implements CouponService {
             return couponRepository.findExpiredCoupons(pageable);
         } else if ("inactive".equals(status)) {
             return couponRepository.findInactiveCoupons(pageable);
-        } else if (type != null) {
-            return couponRepository.findByDiscountType(type, pageable);
+        } else if (type != null && !type.trim().isEmpty()) {
+            try {
+                Coupon.DiscountType enumType = Coupon.DiscountType.valueOf(type);
+                return couponRepository.findByDiscountType(enumType, pageable);
+            } catch (IllegalArgumentException e) {
+                // handle invalid type string (ví dụ: return empty page hoặc default findAll)
+                return getAllCoupons(pageable);
+            }
         }
         return getAllCoupons(pageable);
     }
@@ -140,5 +150,53 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public void deleteCoupon(Integer id) {
         couponRepository.deleteById(id);
+    }
+
+    @Override
+    public Page<Coupon> searchCoupons(String search, String type, String status, Pageable pageable) {
+        Specification<Coupon> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Tìm kiếm theo code hoặc description
+            if (search != null && !search.trim().isEmpty()) {
+                Predicate codePredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("code")),
+                        "%" + search.toLowerCase() + "%"
+                );
+                Predicate descriptionPredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("description")),
+                        "%" + search.toLowerCase() + "%"
+                );
+                predicates.add(criteriaBuilder.or(codePredicate, descriptionPredicate));
+            }
+
+            // Lọc theo loại
+            if (type != null && !type.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("discountType"), Coupon.DiscountType.valueOf(type)));
+            }
+
+            // Lọc theo trạng thái
+            if (status != null && !status.trim().isEmpty()) {
+                Date now = new Date();
+                switch (status) {
+                    case "active":
+                        predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
+                        predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("startDate"), now));
+                        predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("endDate"), now));
+                        break;
+                    case "expired":
+                        predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
+                        predicates.add(criteriaBuilder.lessThan(root.get("endDate"), now));
+                        break;
+                    case "inactive":
+                        predicates.add(criteriaBuilder.equal(root.get("isActive"), false));
+                        break;
+                }
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return couponRepository.findAll(spec, pageable);
     }
 }

@@ -1,5 +1,17 @@
 package com.vn.ebookstore.service.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.vn.ebookstore.model.Book;
 import com.vn.ebookstore.model.Cart;
 import com.vn.ebookstore.model.CartItem;
@@ -11,41 +23,20 @@ import com.vn.ebookstore.repository.CartRepository;
 import com.vn.ebookstore.repository.UserRepository;
 import com.vn.ebookstore.service.CartService;
 import com.vn.ebookstore.service.CouponService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
 
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private BookRepository bookRepository;
-
-    @Autowired
-    private CouponService couponService;
+    @Autowired private CartRepository cartRepository;
+    @Autowired private CartItemRepository cartItemRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private BookRepository bookRepository;
+    @Autowired private CouponService couponService;
 
     @Override
     @Transactional
     public Cart createCart(Cart cart) {
-        if (cart.getCartItems() == null) {
-            cart.setCartItems(new ArrayList<>());
-        }
+        if (cart.getCartItems() == null) cart.setCartItems(new ArrayList<>());
         cart.setCreatedAt(new Date());
         cart.setTotal(BigDecimal.ZERO);
         cart.setSubTotal(BigDecimal.ZERO);
@@ -93,9 +84,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void addToCart(int userId, int bookId, int quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
+        if (quantity <= 0) throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
 
         Cart cart = getCurrentCart(userId);
         Book book = bookRepository.findById(bookId)
@@ -139,9 +128,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void updateCartItemQuantity(int userId, int bookId, int quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
+        if (quantity <= 0) throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
 
         Cart cart = getCurrentCart(userId);
         Optional<CartItem> item = cartItemRepository.findByCartIdAndBookIdAndUpdatedAtIsNull(cart.getId(), bookId);
@@ -159,9 +146,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public Cart getCurrentCartByUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User không thể là null");
-        }
+        if (user == null) throw new IllegalArgumentException("User không thể là null");
 
         Cart cart = cartRepository.findByUserAndUpdatedAtIsNull(user)
                 .orElseGet(() -> {
@@ -190,14 +175,8 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public Cart save(Cart cart) {
-        if (cart.getCartItems() == null) {
-            cart.setCartItems(new ArrayList<>());
-        }
-
-        if (cart.getCreatedAt() == null) {
-            cart.setCreatedAt(new Date());
-        }
-
+        if (cart.getCartItems() == null) cart.setCartItems(new ArrayList<>());
+        if (cart.getCreatedAt() == null) cart.setCreatedAt(new Date());
         return cartRepository.save(cart);
     }
 
@@ -207,7 +186,7 @@ public class CartServiceImpl implements CartService {
         BigDecimal subtotal = items.stream()
                 .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
 
         cart.setSubTotal(subtotal);
         if (cart.getCoupon() != null && couponService.isValidForUse(cart.getCoupon(), subtotal)) {
@@ -261,6 +240,6 @@ public class CartServiceImpl implements CartService {
                 .filter(item -> item.getUpdatedAt() == null)
                 .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
     }
 }

@@ -100,9 +100,6 @@ public class AdminUserController {
         }
     }
 
-    // 3. Lưu vào DB trước để lấy ID (nếu cần)
-    User savedUser = userService.registerNewUser(user);
-
     // 4. Lưu file vào resources/static/image/avatar
     if (!avatarFile.isEmpty()) {
         try {
@@ -118,7 +115,8 @@ public class AdminUserController {
 
 
         } catch (IOException e) {
-            e.printStackTrace();
+            // Use a logger instead of printStackTrace
+            org.slf4j.LoggerFactory.getLogger(AdminUserController.class).error("Failed to save avatar file", e);
         }
     }
 
@@ -171,7 +169,7 @@ public class AdminUserController {
             Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Avatar saved to: " + filePath.toAbsolutePath());
         } catch (IOException e) {
-            e.printStackTrace();
+            org.slf4j.LoggerFactory.getLogger(AdminUserController.class).error("Failed to save avatar file", e);
         }
     } else {
         updatedUser.setAvatar(existingUser.getAvatar());

@@ -1,8 +1,12 @@
 package com.vn.ebookstore.service.impl;
 
-import com.vn.ebookstore.model.Coupon;
-import com.vn.ebookstore.repository.CouponRepository;
-import com.vn.ebookstore.service.CouponService;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,12 +14,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vn.ebookstore.model.Coupon;
+import com.vn.ebookstore.repository.CouponRepository;
+import com.vn.ebookstore.service.CouponService;
+
 import jakarta.persistence.criteria.Predicate;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CouponServiceImpl implements CouponService {
@@ -38,21 +41,23 @@ public class CouponServiceImpl implements CouponService {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal discount = BigDecimal.ZERO;
         try {
             if (coupon.getDiscountType() == Coupon.DiscountType.PERCENTAGE) {
-                discount = amount.multiply(coupon.getDiscountValue().divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP));
+                BigDecimal percent = coupon.getDiscountValue()
+                        .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                BigDecimal discount = amount.multiply(percent);
+
                 if (coupon.getMaxDiscount() != null) {
                     discount = discount.min(coupon.getMaxDiscount());
                 }
+
+                return discount.setScale(2, RoundingMode.HALF_UP);
             } else {
-                discount = coupon.getDiscountValue().min(amount);
+                return coupon.getDiscountValue().min(amount).setScale(2, RoundingMode.HALF_UP);
             }
         } catch (Exception e) {
             return BigDecimal.ZERO;
         }
-
-        return discount.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
     @Override
@@ -62,11 +67,10 @@ public class CouponServiceImpl implements CouponService {
         }
 
         Date now = new Date();
-        return coupon.getIsActive() &&
-                now.after(coupon.getStartDate()) &&
-                now.before(coupon.getEndDate()) &&
-                (coupon.getUsageLimit() == null || coupon.getTimesUsed() < coupon.getUsageLimit()) &&
-                (coupon.getMinPurchase() == null || amount.compareTo(coupon.getMinPurchase()) >= 0);
+        return now.after(coupon.getStartDate())
+                && now.before(coupon.getEndDate())
+                && (coupon.getUsageLimit() == null || coupon.getTimesUsed() < coupon.getUsageLimit())
+                && (coupon.getMinPurchase() == null || amount.compareTo(coupon.getMinPurchase()) >= 0);
     }
 
     @Override
@@ -96,7 +100,6 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Page<Coupon> getCouponsByTypeAndStatus(String type, String status, Pageable pageable) {
-        Date now = new Date();
         if ("active".equals(status)) {
             return couponRepository.findActiveCoupons(pageable);
         } else if ("expired".equals(status)) {
@@ -108,7 +111,6 @@ public class CouponServiceImpl implements CouponService {
                 Coupon.DiscountType enumType = Coupon.DiscountType.valueOf(type);
                 return couponRepository.findByDiscountType(enumType, pageable);
             } catch (IllegalArgumentException e) {
-                // handle invalid type string (ví dụ: return empty page hoặc default findAll)
                 return getAllCoupons(pageable);
             }
         }
@@ -118,21 +120,12 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public String getStatus(Coupon coupon) {
         Date now = new Date();
-        if (!coupon.getIsActive()) {
-            return "inactive";
-        }
-        if (now.before(coupon.getStartDate())) {
-            return "not_started";
-        }
-        if (now.after(coupon.getEndDate())) {
-            return "expired";
-        }
-        long diffInMillies = Math.abs(coupon.getEndDate().getTime() - now.getTime());
-        long diffInDays = diffInMillies / (24 * 60 * 60 * 1000);
-        if (diffInDays <= 7) {
-            return "soon_to_expire";
-        }
-        return "active";
+        if (!coupon.getIsActive()) return "inactive";
+        if (now.before(coupon.getStartDate())) return "not_started";
+        if (now.after(coupon.getEndDate())) return "expired";
+
+        long diffInDays = (coupon.getEndDate().getTime() - now.getTime()) / (24 * 60 * 60 * 1000);
+        return (diffInDays <= 7) ? "soon_to_expire" : "active";
     }
 
     @Override
@@ -154,47 +147,41 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Page<Coupon> searchCoupons(String search, String type, String status, Pageable pageable) {
-        Specification<Coupon> spec = (root, query, criteriaBuilder) -> {
+        Specification<Coupon> spec = (root, _, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Tìm kiếm theo code hoặc description
             if (search != null && !search.trim().isEmpty()) {
-                Predicate codePredicate = criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("code")),
-                        "%" + search.toLowerCase() + "%"
-                );
-                Predicate descriptionPredicate = criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("description")),
-                        "%" + search.toLowerCase() + "%"
-                );
-                predicates.add(criteriaBuilder.or(codePredicate, descriptionPredicate));
+                Predicate codePredicate = cb.like(cb.lower(root.get("code")), "%" + search.toLowerCase() + "%");
+                Predicate descPredicate = cb.like(cb.lower(root.get("description")), "%" + search.toLowerCase() + "%");
+                predicates.add(cb.or(codePredicate, descPredicate));
             }
 
-            // Lọc theo loại
             if (type != null && !type.trim().isEmpty()) {
-                predicates.add(criteriaBuilder.equal(root.get("discountType"), Coupon.DiscountType.valueOf(type)));
-            }
-
-            // Lọc theo trạng thái
-            if (status != null && !status.trim().isEmpty()) {
-                Date now = new Date();
-                switch (status) {
-                    case "active":
-                        predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
-                        predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("startDate"), now));
-                        predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("endDate"), now));
-                        break;
-                    case "expired":
-                        predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
-                        predicates.add(criteriaBuilder.lessThan(root.get("endDate"), now));
-                        break;
-                    case "inactive":
-                        predicates.add(criteriaBuilder.equal(root.get("isActive"), false));
-                        break;
+                try {
+                    Coupon.DiscountType enumType = Coupon.DiscountType.valueOf(type);
+                    predicates.add(cb.equal(root.get("discountType"), enumType));
+                } catch (IllegalArgumentException e) {
+                    // ignore invalid type
                 }
             }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            if (status != null && !status.trim().isEmpty()) {
+                Date now = new Date();
+                switch (status) {
+                    case "active" -> {
+                        predicates.add(cb.equal(root.get("isActive"), true));
+                        predicates.add(cb.lessThanOrEqualTo(root.get("startDate"), now));
+                        predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), now));
+                    }
+                    case "expired" -> {
+                        predicates.add(cb.equal(root.get("isActive"), true));
+                        predicates.add(cb.lessThan(root.get("endDate"), now));
+                    }
+                    case "inactive" -> predicates.add(cb.equal(root.get("isActive"), false));
+                }
+            }
+
+            return cb.and(predicates.toArray(Predicate[]::new));
         };
 
         return couponRepository.findAll(spec, pageable);

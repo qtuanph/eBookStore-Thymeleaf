@@ -22,9 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.vn.ebookstore.model.Book;
 import com.vn.ebookstore.model.Review;
 import com.vn.ebookstore.model.User;
-import com.vn.ebookstore.service.BookService;
 import com.vn.ebookstore.service.ReviewService;
-import com.vn.ebookstore.service.UserService;
 
 @Controller
 @RequestMapping("/admin/reviews")
@@ -32,12 +30,6 @@ public class AdminReviewController {
 
     @Autowired
     private ReviewService reviewService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private BookService bookService;
 
     @GetMapping
     public String listReviews(@RequestParam(required = false) String rating,
@@ -48,7 +40,7 @@ public class AdminReviewController {
         Integer ratingValue = null;
         try {
             if (rating != null && !rating.isEmpty()) {
-                ratingValue = Integer.parseInt(rating);
+                ratingValue = Integer.valueOf(rating);
             }
         } catch (NumberFormatException e) {
             model.addAttribute("error", "Giá trị rating không hợp lệ");

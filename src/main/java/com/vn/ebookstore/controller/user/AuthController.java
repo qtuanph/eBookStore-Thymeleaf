@@ -98,7 +98,7 @@ public class AuthController {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
                 Date birthDate = dateFormat.parse(birthOfDate);
                 user.setBirthOfDate(birthDate);
-            } catch (Exception e) {
+            } catch (java.text.ParseException | NullPointerException e) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Định dạng ngày sinh không hợp lệ!");
                 return "redirect:/register";
             }
@@ -110,6 +110,10 @@ public class AuthController {
                 }
 
                 String originalFilename = avatar.getOriginalFilename();
+                if (originalFilename == null || !originalFilename.contains(".")) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Tên file ảnh không hợp lệ!");
+                    return "redirect:/register";
+                }
                 String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 String filename = UUID.randomUUID().toString() + extension;
 

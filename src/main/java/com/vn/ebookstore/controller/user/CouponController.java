@@ -1,14 +1,19 @@
 package com.vn.ebookstore.controller.user;
 
-import com.vn.ebookstore.model.Coupon;
-import com.vn.ebookstore.service.CouponService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.vn.ebookstore.model.Coupon;
+import com.vn.ebookstore.service.CouponService;
 
 @RestController
 @RequestMapping("/api/coupons")
@@ -22,6 +27,7 @@ public class CouponController {
         try {
             String code = (String) payload.get("code");
             String amountStr = payload.get("amount") != null ? payload.get("amount").toString() : null;
+
             if (code == null || amountStr == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "valid", false,
@@ -31,7 +37,7 @@ public class CouponController {
 
             BigDecimal amount;
             try {
-                amount = new BigDecimal(amountStr).setScale(2, BigDecimal.ROUND_HALF_UP);
+                amount = new BigDecimal(amountStr).setScale(2, RoundingMode.HALF_UP);
             } catch (NumberFormatException e) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "valid", false,
@@ -61,6 +67,7 @@ public class CouponController {
                     "discount", discount,
                     "message", "Mã giảm giá hợp lệ"
             ));
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "valid", false,

@@ -1,19 +1,33 @@
 package com.vn.ebookstore.service.impl;
 
-import com.vn.ebookstore.model.*;
-import com.vn.ebookstore.repository.*;
-import com.vn.ebookstore.service.CouponService;
-import com.vn.ebookstore.service.OrderDetailService;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.vn.ebookstore.model.Address;
+import com.vn.ebookstore.model.Cart;
+import com.vn.ebookstore.model.CartItem;
+import com.vn.ebookstore.model.Coupon;
+import com.vn.ebookstore.model.OrderDetail;
+import com.vn.ebookstore.model.OrderItem;
+import com.vn.ebookstore.model.PaymentDetail;
+import com.vn.ebookstore.model.User;
+import com.vn.ebookstore.repository.AddressRepository;
+import com.vn.ebookstore.repository.CartRepository;
+import com.vn.ebookstore.repository.OrderDetailRepository;
+import com.vn.ebookstore.repository.OrderItemRepository;
+import com.vn.ebookstore.repository.PaymentDetailRepository;
+import com.vn.ebookstore.repository.UserRepository;
+import com.vn.ebookstore.service.CouponService;
+import com.vn.ebookstore.service.OrderDetailService;
 
 @Service
 public class OrderDetailServiceImpl implements OrderDetailService {
@@ -77,24 +91,26 @@ public class OrderDetailServiceImpl implements OrderDetailService {
             order.setOrderItems(orderItems);
 
             PaymentDetail payment = createPaymentDetail(order, paymentMethod);
-            order.setPayments(Arrays.asList(payment));
+            order.setPayments(Collections.singletonList(payment));
 
             order = orderDetailRepository.save(order);
             orderItemRepository.saveAll(orderItems);
             paymentDetailRepository.save(payment);
 
             return order;
+        } catch (RuntimeException e) {
+            throw e; // rethrow các exception mình đã kiểm soát
         } catch (Exception e) {
-            throw new RuntimeException("Error creating order: " + e.getMessage());
+            throw new RuntimeException("Đã xảy ra lỗi khi tạo đơn hàng: " + e.getMessage(), e);
         }
     }
 
     private BigDecimal calculateSubtotal(List<CartItem> cartItems) {
         return cartItems.stream()
                 .filter(item -> item.getUpdatedAt() == null)
-                .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
+                .map(item -> new BigDecimal(item.getPrice()).multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, BigDecimal.ROUND_HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private String formatAddress(Address address) {

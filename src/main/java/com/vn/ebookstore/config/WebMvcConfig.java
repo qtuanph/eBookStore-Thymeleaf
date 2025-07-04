@@ -1,6 +1,5 @@
 package com.vn.ebookstore.config;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.springframework.context.annotation.Configuration;
@@ -12,25 +11,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-         // Thư mục ảnh thực trên máy
-        Path uploadDir = Paths.get("E:/suasang/eBookStore-Thymeleaf/uploads/avatar");
-        String uploadPath = uploadDir.toFile().getAbsolutePath();
+        // Lấy đường dẫn tuyệt đối tới thư mục gốc của project
+        String baseUploadPath = Paths.get(System.getProperty("user.dir"), "uploads").toString();
 
-        // ánh xạ URL /image/avatar/** -> thư mục ảnh ngoài
+        // Cấu hình ánh xạ ảnh avatar
         registry.addResourceHandler("/image/avatar/**")
-                .addResourceLocations("file:///" + uploadPath + "/");
+                .addResourceLocations("file:///" + baseUploadPath + "/avatar/");
 
-         // ánh xạ ảnh danh mục
-        Path categoryDir = Paths.get("E:/suasang/eBookStore-Thymeleaf/uploads/category");
-        String categoryPath = categoryDir.toFile().getAbsolutePath();
+        // Cấu hình ánh xạ ảnh category
         registry.addResourceHandler("/image/category/**")
-                .addResourceLocations("file:///" + categoryPath + "/");
+                .addResourceLocations("file:///" + baseUploadPath + "/category/");
 
-        // ánh xạ ảnh sách (book cover)
-        Path bookDir = Paths.get("E:/suasang/eBookStore-Thymeleaf/uploads/book");
-        String bookPath = bookDir.toFile().getAbsolutePath();
+        // Cấu hình ánh xạ ảnh sách (book cover)
         registry.addResourceHandler("/image/book/**")
-                .addResourceLocations("file:///" + bookPath + "/");
-
+                .addResourceLocations("file:///" + baseUploadPath + "/book/");
     }
 }

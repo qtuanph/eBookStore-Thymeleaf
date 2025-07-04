@@ -85,7 +85,6 @@
                                         <th>Nhà xuất bản</th>
                                         <th>Ngày xuất bản</th>
                                         <th>Số trang</th>
-                                        <th>File PDF</th>
                                         <th>Danh mục</th>
                                         <th>Thao tác</th>
                                     </tr>
@@ -105,14 +104,6 @@
                                         <td th:text="${book.bookDetail != null ? book.bookDetail.publisher : ''}">Nhà xuất bản</td>
                                         <td th:text="${book.bookDetail != null && book.bookDetail.publicationDate != null ? #temporals.format(book.bookDetail.publicationDate, 'dd/MM/yyyy') : ''}">Ngày xuất bản</td>
                                         <td th:text="${book.bookDetail != null ? book.bookDetail.pages : ''}">Số trang</td>
-                                        <td>
-                                            <a th:if="${book.bookDetail != null && book.bookDetail.fileUrl != null}" 
-                                               th:href="@{/file/book/{file}(file=${book.bookDetail.fileUrl})}" 
-                                               target="_blank" class="file-link">
-                                               📄 Tải PDF
-                                            </a>
-                                            <span th:if="${book.bookDetail == null || book.bookDetail.fileUrl == null}">Không có</span>
-                                        </td>
                                         <td th:text="${book.subCategory != null ? book.subCategory.name : 'Chưa có'}">Danh mục</td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-primary me-1" 

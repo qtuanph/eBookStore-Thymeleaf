@@ -689,7 +689,7 @@
                                     <!-- Link for non-authenticated users -->
                                     <a th:if="${book != null}" sec:authorize="!isAuthenticated()"
                                         th:href="@{'/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : defaultCoverUrl}" 
+                                        <img th:src="@{/image/book/{img}(img=${book.cover != null ? book.cover : 'default-book.jpg'})}"
                                              class="product-image w-100" 
                                              th:alt="${book != null ? book.title : 'Default Cover'}">
                                     </a>

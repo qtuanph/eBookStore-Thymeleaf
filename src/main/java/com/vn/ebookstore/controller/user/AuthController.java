@@ -91,7 +91,7 @@ public class AuthController {
             user.setLastName(lastName);
             user.setUsername(username);
             user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(password));
+            user.setPassword(password);
             user.setPhoneNumber(phoneNumber);
 
             // Parse ngày sinh

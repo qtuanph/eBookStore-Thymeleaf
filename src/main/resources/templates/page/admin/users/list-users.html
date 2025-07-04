@@ -5,238 +5,280 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý người dùng - Hanoi Aptech Bookstore</title>
+
+    <!-- JS & CSS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/script_admin_dashboard.js}"></script>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/admin_style.css}">
+
+    <style>
+        .wrapper {
+            display: flex;
+        }
+        #content {
+            flex: 1;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .topbar {
+            background-color: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+    </style>
 </head>
-<body>
-    <div class="wrapper">
-        <!-- Sidebar -->
-        <!-- <nav id="sidebar" th:replace="~{page/admin/fragments/sidebar :: sidebar}"></nav> -->
+<body class="bg-light">
 
-        <!-- Page Content -->
-        <div id="content">
-            <!-- Topbar -->
-            <!-- <nav class="navbar navbar-expand-lg navbar-light bg-light" th:replace="~{page/admin/fragments/topbar :: topbar}"></nav> -->
+<div class="wrapper">
+    <!-- Sidebar -->
+    <div th:replace="~{fragments/admin_sidebar :: sidebar}"></div>
 
-            <!-- Users Content -->
-            <div class="container-fluid p-4">
-                <!-- Page Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 class="mb-0">Quản lý người dùng</h2>
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Dashboard</a></li>
-                                <li class="breadcrumb-item active">Người dùng</li>
-                            </ol>
-                        </nav>
-                    </div>
-                    <a th:href="@{/admin/users/create}">➕ Thêm người dùng mới</a>
-        
+    <!-- Content -->
+    <div id="content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <span th:text="${#authentication.name}">admin@gmail.com</span>
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </button>
+            </form>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container-fluid mt-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="text-primary mb-0">👥 Quản lý người dùng</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Người dùng</li>
+                        </ol>
+                    </nav>
                 </div>
+                <a th:href="@{/admin/users/create}" class="btn btn-primary">+ Thêm người dùng mới</a>
+            </div>
 
-                <!-- Stats Cards Row -->
-                <div class="row g-4 mb-4">
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stats-card card bg-primary text-white h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div class="stat-number" th:text="${totalUsers}">0</div>
-                                        <div class="stat-label">Tổng người dùng</div>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-users fa-2x"></i>
-                                    </div>
+            <!-- Stats Cards Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stats-card card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number" th:text="${totalUsers ?: '0'}">0</div>
+                                    <div class="stat-label">TỔNG NGƯỜI DÙNG</div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stats-card card bg-success text-white h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div class="stat-number" th:text="${activeUsers}">0</div>
-                                        <div class="stat-label">Người dùng hoạt động</div>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-user-check fa-2x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stats-card card bg-info text-white h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div class="stat-number" th:text="${newUsers}">0</div>
-                                        <div class="stat-label">Người dùng mới (30 ngày)</div>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-user-plus fa-2x"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stats-card card bg-warning text-white h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div class="stat-number" th:text="${adminUsers}">0</div>
-                                        <div class="stat-label">Quản trị viên</div>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-user-shield fa-2x"></i>
-                                    </div>
+                                <div class="icon">
+                                    <i class="fas fa-users fa-2x"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Search & Filters Card -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <form th:action="@{/admin/users}" method="post" class="row g-3">
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <input type="text" class="form-control" name="search" 
-                                           placeholder="Tìm kiếm theo tên, email..." th:value="${param.search}">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stats-card card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number" th:text="${activeUsers ?: '0'}">0</div>
+                                    <div class="stat-label">NGƯỜI DÙNG HOẠT ĐỘNG</div>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-user-check fa-2x"></i>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <select class="form-select" name="role">
-                                    <option value="">Tất cả vai trò</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="customer">Khách hàng</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select class="form-select" name="status">
-                                    <option value="">Tất cả trạng thái</option>
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="inactive">Không hoạt động</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-filter me-2"></i>Lọc
-                                </button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Users Table Card -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Người dùng</th>
-                                        <th>Email</th>
-                                        <th>Số điện thoại</th>
-                                        <th>Vai trò</th>
-                                        <th>Trạng thái</th>
-                                        <th>Ngày tạo</th>
-                                        <th>Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="user : ${users}">
-                                        <td th:text="${user.id}"></td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                    <img th:if="${user.avatar != null}"
-                                                        th:src="@{'/image/avatar/' + ${user.avatar}}"
-                                                        class="rounded-circle me-2" width="40" height="40" alt="Avatar">
-                                                    <img th:if="${user.avatar == null}"
-                                                        th:src="@{/image/avatar/default-avatar.jpg}"
-                                                        class="rounded-circle me-2" width="40" height="40" alt="Avatar">
-
-
-                                                <div>
-                                                    <div class="fw-bold" th:text="${user.firstName + ' ' + user.lastName}"></div>
-                                                    <small class="text-muted" th:text="${user.username}"></small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td th:text="${user.email}"></td>
-                                        <td th:text="${user.phoneNumber}"></ltd>
-                                        <td>
-                                            <span th:each="role : ${user.roles}" 
-                                                  th:text="${role.name}"
-                                                  class="badge bg-primary me-1">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span th:if="${user.deletedAt == null}" class="badge bg-success">Hoạt động</span>
-                                            <span th:unless="${user.deletedAt == null}" class="badge bg-danger">Không hoạt động</span>
-                                        </td>
-                                        <td th:text="${#dates.format(user.createdAt, 'dd/MM/yyyy')}"></td>
-                                        <td>
-                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-info" title="Xem"
-                                                th:href="@{/admin/users/view/{id}(id=${user.id})}">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a class="btn btn-sm btn-warning" title="Sửa"
-                                                th:href="@{/admin/users/edit/{id}(id=${user.id})}">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a class="btn btn-sm btn-danger" title="Xóa"
-                                                th:href="@{/admin/users/delete/{id}(id=${user.id})}"
-                                                onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?');">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stats-card card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number" th:text="${newUsers ?: '0'}">0</div>
+                                    <div class="stat-label">NGƯỜI DÙNG MỚI (30 NGÀY)</div>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-user-plus fa-2x"></i>
+                                </div>
+                            </div>
                         </div>
-
-                        <!-- Pagination -->
-                        <nav th:if="${totalPages > 1}" class="mt-3">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/admin/users(page=${currentPage - 1})}">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </a>
-                                </li>
-                                <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
-                                    th:classappend="${pageNum == currentPage} ? 'active'">
-                                    <a class="page-link" th:href="@{/admin/users(page=${pageNum})}" 
-                                       th:text="${pageNum + 1}"></a>
-                                </li>
-                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/admin/users(page=${currentPage + 1})}">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stats-card card bg-warning text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number" th:text="${adminUsers ?: '0'}">0</div>
+                                    <div class="stat-label">QUẢN TRỊ VIÊN</div>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-user-shield fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div th:if="${successMessage}" style="color: green; font-weight: bold; margin-bottom: 15px;">
-            <p th:text="${successMessage}"></p>
-        </div>
 
+            <!-- Search & Filters Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/users}" method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" name="search"
+                                       placeholder="Tìm kiếm theo tên, email..." th:value="${param.search}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="role">
+                                <option value="">Tất cả vai trò</option>
+                                <option value="admin" th:selected="${param.role == 'admin'}">Admin</option>
+                                <option value="customer" th:selected="${param.role == 'customer'}">Khách hàng</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="status">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="active" th:selected="${param.status == 'active'}">Đang hoạt động</option>
+                                <option value="inactive" th:selected="${param.status == 'inactive'}">Không hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Lọc
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="table-light text-center">
+                    <tr>
+                        <th>ID</th>
+                        <th>Người dùng</th>
+                        <th>Email</th>
+                        <th>Số điện thoại</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}" class="text-center"></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img th:if="${user.avatar != null}"
+                                     th:src="@{'/image/avatar/' + ${user.avatar}}"
+                                     class="user-avatar me-2" alt="Avatar">
+                                <img th:if="${user.avatar == null}"
+                                     th:src="@{/image/avatar/default-avatar.jpg}"
+                                     class="user-avatar me-2" alt="Avatar">
+                                <div>
+                                    <div class="fw-bold" th:text="${user.firstName + ' ' + user.lastName}"></div>
+                                    <small class="text-muted" th:text="${user.username}"></small>
+                                </div>
+                            </div>
+                        </td>
+                        <td th:text="${user.email}"></td>
+                        <td th:text="${user.phoneNumber}"></td>
+                        <td>
+                                <span th:each="role : ${user.roles}"
+                                      th:text="${role.name}"
+                                      th:class="${role.name == 'admin'} ? 'badge bg-primary me-1' : 'badge bg-secondary me-1'">
+                                </span>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${user.deletedAt == null}" class="badge bg-success">Hoạt động</span>
+                            <span th:unless="${user.deletedAt == null}" class="badge bg-danger">Không hoạt động</span>
+                        </td>
+                        <td th:text="${#dates.format(user.createdAt, 'dd/MM/yyyy')}" class="text-center"></td>
+                        <td class="text-center">
+                            <a th:href="@{/admin/users/edit/{id}(id=${user.id})}" class="btn btn-sm btn-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a th:href="@{/admin/users/delete/{id}(id=${user.id})}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?');">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav th:if="${totalPages > 1}" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/users(page=${currentPage - 1})}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${pageNum == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/users(page=${pageNum})}"
+                           th:text="${pageNum + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/users(page=${currentPage + 1})}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Success Message -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
     </div>
+</div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script th:src="@{/js/script_admin_users.js}"></script>
+<script th:src="@{/js/script_admin_users.js}"></script>
 </body>
 </html>

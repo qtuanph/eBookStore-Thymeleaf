@@ -2,13 +2,14 @@ package com.vn.ebookstore.service.impl;
 
 import com.vn.ebookstore.model.*;
 import com.vn.ebookstore.repository.*;
-import com.vn.ebookstore.service.OrderDetailService;
 import com.vn.ebookstore.service.CouponService;
+import com.vn.ebookstore.service.OrderDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -40,12 +41,12 @@ public class OrderDetailServiceImpl implements OrderDetailService {
 
     @Override
     @Transactional
-    public OrderDetail createOrder(Integer userId, Integer addressId, String paymentMethod, String note) {
+    public OrderDetail createOrder(Integer userId, Integer addressId, String paymentMethod, String note, Coupon coupon) {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            Cart cart = cartRepository.findByUserAndUpdatedAtIsNull(user)  // Updated to use correct method name
+
+            Cart cart = cartRepository.findByUserAndUpdatedAtIsNull(user)
                     .orElseThrow(() -> new RuntimeException("Cart not found"));
 
             Address address = addressRepository.findById(addressId)
@@ -56,30 +57,28 @@ public class OrderDetailServiceImpl implements OrderDetailService {
             order.setOrderAddress(formatAddress(address));
             order.setStatus("PENDING");
             order.setCreatedAt(new Date());
-            
-            // Calculate subtotal
-            double subtotal = calculateSubtotal(cart.getCartItems());
+
+            BigDecimal subtotal = calculateSubtotal(cart.getCartItems());
             order.setSubTotal(subtotal);
 
-            // Apply coupon if exists
-            if (cart.getCoupon() != null) {
-                Double discount = couponService.calculateDiscount(cart.getCoupon(), subtotal);
-                order.setCoupon(cart.getCoupon());
+            if (coupon != null) {
+                if (!couponService.isValidForUse(coupon, subtotal)) {
+                    throw new RuntimeException("Mã giảm giá không hợp lệ hoặc không thể sử dụng");
+                }
+                BigDecimal discount = couponService.calculateDiscount(coupon, subtotal);
+                order.setCoupon(coupon);
                 order.setDiscountAmount(discount);
-                order.setTotal((long) (subtotal - discount));
+                order.setTotal(subtotal.subtract(discount));
             } else {
-                order.setTotal((long) subtotal);
+                order.setTotal(subtotal);
             }
 
-            // Create order items
             List<OrderItem> orderItems = createOrderItems(cart.getCartItems(), order);
             order.setOrderItems(orderItems);
 
-            // Create payment detail
             PaymentDetail payment = createPaymentDetail(order, paymentMethod);
             order.setPayments(Arrays.asList(payment));
 
-            // Save order and related entities
             order = orderDetailRepository.save(order);
             orderItemRepository.saveAll(orderItems);
             paymentDetailRepository.save(payment);
@@ -90,36 +89,37 @@ public class OrderDetailServiceImpl implements OrderDetailService {
         }
     }
 
-    private double calculateSubtotal(List<CartItem> cartItems) {
+    private BigDecimal calculateSubtotal(List<CartItem> cartItems) {
         return cartItems.stream()
                 .filter(item -> item.getUpdatedAt() == null)
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+                .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
     private String formatAddress(Address address) {
         return String.format("%s, %s, %s, %s, %s, %s",
-            address.getAddressLine(),
-            address.getWard(),
-            address.getDistrict(),
-            address.getCity(),
-            address.getCountry(),
-            address.getPostalCode());
+                address.getAddressLine(),
+                address.getWard(),
+                address.getDistrict(),
+                address.getCity(),
+                address.getCountry(),
+                address.getPostalCode());
     }
 
     private List<OrderItem> createOrderItems(List<CartItem> cartItems, OrderDetail order) {
         return cartItems.stream()
-            .filter(item -> item.getUpdatedAt() == null)
-            .map(item -> {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(order);
-                orderItem.setBook(item.getBook());
-                orderItem.setQuantity(item.getQuantity());
-                orderItem.setPrice(item.getPrice());
-                orderItem.setCreatedAt(new Date());
-                return orderItem;
-            })
-            .collect(Collectors.toList());
+                .filter(item -> item.getUpdatedAt() == null)
+                .map(item -> {
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrder(order);
+                    orderItem.setBook(item.getBook());
+                    orderItem.setQuantity(item.getQuantity());
+                    orderItem.setPrice(item.getPrice());
+                    orderItem.setCreatedAt(new Date());
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
     }
 
     private PaymentDetail createPaymentDetail(OrderDetail order, String paymentMethod) {
@@ -147,7 +147,6 @@ public class OrderDetailServiceImpl implements OrderDetailService {
     @Transactional
     public void cancelOrder(Integer orderId) {
         OrderDetail order = getOrderById(orderId);
-        // Cho phép hủy đơn khi status là PENDING hoặc CONFIRMED
         if (!("PENDING".equals(order.getStatus()) || "CONFIRMED".equals(order.getStatus()))) {
             throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận");
         }
@@ -174,16 +173,11 @@ public class OrderDetailServiceImpl implements OrderDetailService {
     }
 
     @Override
-    public long getTotalOrders() {
-        return orderDetailRepository.count();
-    }
-
-    @Override
-    public double getTotalRevenue() {
+    public BigDecimal getTotalRevenue() {
         return orderDetailRepository.findAll().stream()
                 .filter(order -> "DELIVERED".equals(order.getStatus()))
-                .mapToDouble(order -> order.getSubTotal()) // Thay đổi từ getTotal() sang getSubTotal()
-                .sum();
+                .map(OrderDetail::getSubTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
@@ -194,5 +188,10 @@ public class OrderDetailServiceImpl implements OrderDetailService {
     @Override
     public List<OrderDetail> getRecentOrders(PageRequest pageRequest) {
         return orderDetailRepository.findTopNByOrderByCreatedAtDesc(pageRequest);
+    }
+
+    @Override
+    public long getTotalOrders() {
+        return orderDetailRepository.count();
     }
 }

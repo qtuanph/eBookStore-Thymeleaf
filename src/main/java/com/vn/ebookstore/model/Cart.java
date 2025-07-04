@@ -1,82 +1,51 @@
 package com.vn.ebookstore.model;
 
 import jakarta.persistence.*;
-
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "cart")
+@Table(name = "carts")
 public class Cart {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private long total;
-    @Column(updatable = false)
-    private Date createdAt;
-
-    @Column(name = "updated_at")
-    private Date updatedAt;
-
-    @Column(name = "coupon_id")
-    private Integer couponId;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "cart")
-    private List<CartItem> cartItems = new ArrayList<>();;
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
+    private List<CartItem> cartItems;
 
-    @ManyToOne
-    @JoinColumn(name = "coupon_id", insertable = false, updatable = false)
-    private Coupon coupon;
-
-    @Column(name = "discount_amount")
-    private Double discountAmount = 0.0;
+    @Column(name = "total")
+    private BigDecimal total;
 
     @Column(name = "sub_total")
-    private Double subTotal;
+    private BigDecimal subTotal;
 
-    public int getId() {
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
+    @ManyToOne
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
+
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @Column(name = "updated_at")
+    private Date updatedAt;
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
-    }
-
-    public long getTotal() {
-        return total;
-    }
-
-    public void setTotal(long total) {
-        this.total = total;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Integer getCouponId() {
-        return couponId;
-    }
-
-    public void setCouponId(Integer couponId) {
-        this.couponId = couponId;
     }
 
     public User getUser() {
@@ -95,6 +64,30 @@ public class Cart {
         this.cartItems = cartItems;
     }
 
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+    public BigDecimal getSubTotal() {
+        return subTotal;
+    }
+
+    public void setSubTotal(BigDecimal subTotal) {
+        this.subTotal = subTotal;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
     public Coupon getCoupon() {
         return coupon;
     }
@@ -103,19 +96,19 @@ public class Cart {
         this.coupon = coupon;
     }
 
-    public Double getDiscountAmount() {
-        return discountAmount;
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
-    public void setDiscountAmount(Double discountAmount) {
-        this.discountAmount = discountAmount;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
-    public Double getSubTotal() {
-        return subTotal;
+    public Date getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setSubTotal(Double subTotal) {
-        this.subTotal = subTotal;
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

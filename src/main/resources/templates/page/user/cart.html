@@ -24,7 +24,7 @@
                 <i class="fas fa-trash me-2"></i>Xóa tất cả
             </button>
         </div>
-        
+
         <div class="row">
             <div class="col-lg-8">
                 <div class="table-responsive">
@@ -42,11 +42,11 @@
                             <tr th:each="item : ${cart.cartItems}" th:if="${item.updatedAt == null}">
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img th:src="${item.book.cover}" alt="Book Cover" 
+                                        <img th:src="${item.book.cover}" alt="Book Cover"
                                              style="width: 50px; height: 70px; object-fit: cover;" class="me-3">
                                         <div>
                                             <h6 class="mb-0">
-                                                <a th:href="@{/user/book/{id}(id=${item.book.id})}" 
+                                                <a th:href="@{/user/book/{id}(id=${item.book.id})}"
                                                    th:text="${item.book.title}"
                                                    class="text-decoration-none"></a>
                                             </h6>
@@ -57,9 +57,9 @@
                                 <td th:text="${item.price} + ' VNĐ'"></td>
                                 <td>
                                     <div class="input-group" style="width: 120px;">
-                                        <button class="btn btn-outline-secondary" type="button" 
+                                        <button class="btn btn-outline-secondary" type="button"
                                                 th:onclick="'updateQuantity(' + ${item.book.id} + ', -1)'">-</button>
-                                        <input type="number" class="form-control text-center" 
+                                        <input type="number" class="form-control text-center"
                                                th:value="${item.quantity}" min="1"
                                                th:attr="data-book-id=${item.book.id}"
                                                th:onchange="'updateQuantity(' + ${item.book.id} + ', this.value)'">
@@ -113,7 +113,7 @@
         function updateQuantity(bookId, change) {
             let input = document.querySelector(`input[data-book-id="${bookId}"]`);
             let newQuantity;
-            
+
             if (typeof change === 'string') {
                 newQuantity = parseInt(change);
             } else {

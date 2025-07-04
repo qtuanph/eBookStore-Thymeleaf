@@ -1,8 +1,14 @@
 package com.vn.ebookstore.controller.user;
 
-import com.vn.ebookstore.model.User;
-import com.vn.ebookstore.model.Address;
-import com.vn.ebookstore.service.UserService;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.security.core.Authentication;
@@ -11,19 +17,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.UUID;
-import java.util.ArrayList;
-import java.util.List;
+import com.vn.ebookstore.model.Address;
+import com.vn.ebookstore.model.User;
+import com.vn.ebookstore.service.UserService;
 
 @Controller
 public class AuthController {
@@ -34,8 +37,8 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private final String UPLOAD_DIR = "E:/suasang/eBookStore-Thymeleaf/uploads/avatar";
-    private final String ACCESS_PATH = "/uploads/avatar/"; // Đường dẫn dùng khi hiển thị ảnh trên website
+    private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/avatar";
+    private final String ACCESS_PATH = "/image/avatar/";
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
@@ -91,7 +94,7 @@ public class AuthController {
             user.setLastName(lastName);
             user.setUsername(username);
             user.setEmail(email);
-            user.setPassword(password);
+            user.setPassword(passwordEncoder.encode(password)); // ✅ mã hóa password
             user.setPhoneNumber(phoneNumber);
 
             try {
@@ -104,22 +107,18 @@ public class AuthController {
             }
 
             if (!avatar.isEmpty()) {
-                // Tạo thư mục nếu chưa tồn tại
                 Path uploadPath = Paths.get(UPLOAD_DIR);
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
 
-                // Tạo tên file ngẫu nhiên
                 String originalFilename = avatar.getOriginalFilename();
                 String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 String filename = UUID.randomUUID().toString() + extension;
 
-                // Lưu file
                 Path filePath = uploadPath.resolve(filename);
                 Files.copy(avatar.getInputStream(), filePath);
 
-                // Cập nhật đường dẫn avatar đầy đủ để hiển thị qua website
                 user.setAvatar(ACCESS_PATH + filename);
             }
 
@@ -132,9 +131,7 @@ public class AuthController {
             address.setPostalCode(postalCode);
             address.setUser(user);
 
-            List<Address> addresses = new ArrayList<>();
-            addresses.add(address);
-            user.setAddresses(addresses);
+            user.setAddresses(List.of(address));
 
             userService.registerNewUser(user);
             redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
@@ -33,9 +33,6 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/avatar";
     private final String ACCESS_PATH = "/image/avatar/";
@@ -94,7 +91,7 @@ public class AuthController {
             user.setLastName(lastName);
             user.setUsername(username);
             user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(password)); // ✅ mã hóa password
+            user.setPassword(password); // Gửi raw password
             user.setPhoneNumber(phoneNumber);
 
             try {
@@ -131,9 +128,12 @@ public class AuthController {
             address.setPostalCode(postalCode);
             address.setUser(user);
 
-            user.setAddresses(List.of(address));
+            List<Address> addresses = new ArrayList<>();
+            addresses.add(address);
+            user.setAddresses(addresses);
 
             userService.registerNewUser(user);
+
             redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
             return "redirect:/login";
         } catch (IOException e) {

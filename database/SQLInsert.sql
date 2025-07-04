@@ -1,12 +1,10 @@
 USE ebookstore;
 
 INSERT INTO users (avatar, first_name, last_name, username, email, password, birth_of_date, phone_number) VALUES
-                                                                                                              ('avatar_admin.png', 'Quản trị', 'Hệ thống', 'admin', 'admin@example.com', '$2a$10$E9UzYQhDqXe/1dVtFdUIteE2PpVUK68FSvAXFXqNldU/n8yt2hSAu
-', '1980-01-01', '0123456789'),
-                                                                                                              ('avatar_customer.png', 'Khách', 'Hàng', 'customer', 'customer@example.com', 'customer', '1990-05-05', '0987654321'),
-                                                                                                              ('avatar_admin.png', 'Trương', 'Tuấn Kiệt', 'admin_tuankiet', 'admintuankiet@gmail.com', '$2a$12$Sb/PMNFovWqrMQbNNMuVee7MuXQNpGa9G5SkeX2t24nOHycqKDeyS', '2004-01-01', '0123456789'),
-                                                                                                              ('avatar_customer.png', 'Trương', 'Tuấn Kiệt', 'user_tuankiet', 'usertuankiet@gmail.com', 'customer', '2004-05-05', '0987654321');
-
+    ('avatar_admin.png', 'Quản trị', 'Hệ thống', 'admin', 'admin@example.com', '$2a$10$E9UzYQhDqXe/1dVtFdUIteE2PpVUK68FSvAXFXqNldU/n8yt2hSAu', '1980-01-01', '0123456789'),
+    ('avatar_customer.png', 'Khách', 'Hàng', 'customer', 'customer@example.com', 'customer', '1990-05-05', '0987654321'),
+    ('avatar_admin.png', 'Trương', 'Tuấn Kiệt', 'admin_tuankiet', 'admintuankiet@gmail.com', '$2a$12$Sb/PMNFovWqrMQbNNMuVee7MuXQNpGa9G5SkeX2t24nOHycqKDeyS', '2004-01-01', '0123456789'),
+    ('avatar_customer.png', 'Trương', 'Tuấn Kiệt', 'user_tuankiet', 'usertuankiet@gmail.com', 'customer', '2004-05-05', '0987654321');
 
 INSERT INTO addresses (user_id, address_line, ward, district, city, country, postal_code) VALUES
                                                                                               (1, 'Số 1 Đường Lãnh đạo', 'Phường Trung tâm', 'Quận Hoàn Kiếm', 'Hà Nội', 'Việt Nam', '100000'),

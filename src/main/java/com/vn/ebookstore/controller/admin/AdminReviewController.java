@@ -1,22 +1,3 @@
-package com.vn.ebookstore.controller.admin;
-
-import com.vn.ebookstore.model.Review;
-import com.vn.ebookstore.model.User;
-import com.vn.ebookstore.model.Book;
-import com.vn.ebookstore.service.ReviewService;
-import com.vn.ebookstore.service.UserService;
-import com.vn.ebookstore.service.BookService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.Arrays;
-
 @Controller
 @RequestMapping("/admin/reviews")
 public class AdminReviewController {
@@ -64,23 +45,17 @@ public class AdminReviewController {
         model.addAttribute("review", review);
         model.addAttribute("user", user);
         model.addAttribute("book", book);
-        return "page/admin/reviews/view-review"; // Sửa đường dẫn trả về
+        return "page/admin/reviews/view-review";
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteReview(@PathVariable Integer id) {
-        reviewService.deleteReview(id);
-        return "redirect:/admin/reviews?success=deleted";
-    }
-    @PostMapping("/admin/reviews/delete/{id}")
-    public String deleteReview(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String deleteReview(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            reviewService.deleteById(Math.toIntExact(id));
+            reviewService.deleteById(id);
             redirectAttributes.addFlashAttribute("success", "Xóa đánh giá thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Xóa đánh giá thất bại.");
         }
         return "redirect:/admin/reviews";
     }
-
 }

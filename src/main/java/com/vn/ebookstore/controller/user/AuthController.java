@@ -34,6 +34,9 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    private final String UPLOAD_DIR = "E:/suasang/eBookStore-Thymeleaf/uploads/avatar";
+    private final String ACCESS_PATH = "/uploads/avatar/"; // Đường dẫn dùng khi hiển thị ảnh trên website
+
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
@@ -45,7 +48,6 @@ public class AuthController {
     public String login() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
-            // Kiểm tra role và redirect tương ứng
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                 return "redirect:/admin/dashboard";
             } else {
@@ -63,38 +65,35 @@ public class AuthController {
 
     @PostMapping("/register")
     public String registerUser(@RequestParam("firstName") String firstName,
-                             @RequestParam("lastName") String lastName,
-                             @RequestParam("username") String username,
-                             @RequestParam("email") String email,
-                             @RequestParam("password") String password,
-                             @RequestParam("confirmPassword") String confirmPassword,
-                             @RequestParam("birthOfDate") String birthOfDate,
-                             @RequestParam("phoneNumber") String phoneNumber,
-                             @RequestParam("avatar") MultipartFile avatar,
-                             @RequestParam("addressLine") String addressLine,
-                             @RequestParam("ward") String ward,
-                             @RequestParam("district") String district,
-                             @RequestParam("city") String city,
-                             @RequestParam("country") String country,
-                             @RequestParam("postalCode") String postalCode,
-                             RedirectAttributes redirectAttributes) {
+                               @RequestParam("lastName") String lastName,
+                               @RequestParam("username") String username,
+                               @RequestParam("email") String email,
+                               @RequestParam("password") String password,
+                               @RequestParam("confirmPassword") String confirmPassword,
+                               @RequestParam("birthOfDate") String birthOfDate,
+                               @RequestParam("phoneNumber") String phoneNumber,
+                               @RequestParam("avatar") MultipartFile avatar,
+                               @RequestParam("addressLine") String addressLine,
+                               @RequestParam("ward") String ward,
+                               @RequestParam("district") String district,
+                               @RequestParam("city") String city,
+                               @RequestParam("country") String country,
+                               @RequestParam("postalCode") String postalCode,
+                               RedirectAttributes redirectAttributes) {
         try {
-            // Kiểm tra mật khẩu xác nhận
             if (!password.equals(confirmPassword)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu xác nhận không khớp!");
                 return "redirect:/register";
             }
 
-            // Tạo đối tượng User
             User user = new User();
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setUsername(username);
             user.setEmail(email);
-            user.setPassword(password);
+            user.setPassword(passwordEncoder.encode(password));
             user.setPhoneNumber(phoneNumber);
 
-            // Parse ngày sinh
             try {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
                 Date birthDate = dateFormat.parse(birthOfDate);
@@ -104,43 +103,26 @@ public class AuthController {
                 return "redirect:/register";
             }
 
-            // Xử lý upload ảnh
             if (!avatar.isEmpty()) {
-                String uploadDir = "E:/suasang/eBookStore-Thymeleaf/uploads/avatar";;
-                
-                
-
-                // Xử lý xóa avatar cũ nếu có
-                if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
-                    try {
-                        String oldAvatarPath = "src/main/resources/static" + user.getAvatar();
-                        Files.deleteIfExists(Paths.get(oldAvatarPath));
-                    } catch (IOException e) {
-                        // Log warning nhưng vẫn tiếp tục xử lý
-                        System.out.println("Warning: Could not delete old avatar: " + e.getMessage());
-                    }
-                }
-
                 // Tạo thư mục nếu chưa tồn tại
-                Path uploadPath = Paths.get(uploadDir);
+                Path uploadPath = Paths.get(UPLOAD_DIR);
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
 
-                // Tạo tên file ngẫu nhiên để tránh trùng lặp
+                // Tạo tên file ngẫu nhiên
                 String originalFilename = avatar.getOriginalFilename();
                 String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 String filename = UUID.randomUUID().toString() + extension;
 
-                // Lưu file mới
+                // Lưu file
                 Path filePath = uploadPath.resolve(filename);
                 Files.copy(avatar.getInputStream(), filePath);
 
-                // Cập nhật đường dẫn avatar mới
-                user.setAvatar(filename);
+                // Cập nhật đường dẫn avatar đầy đủ để hiển thị qua website
+                user.setAvatar(ACCESS_PATH + filename);
             }
 
-            // Tạo đối tượng Address và thiết lập thông tin
             Address address = new Address();
             address.setAddressLine(addressLine);
             address.setWard(ward);
@@ -150,12 +132,10 @@ public class AuthController {
             address.setPostalCode(postalCode);
             address.setUser(user);
 
-            // Thiết lập danh sách địa chỉ cho user
             List<Address> addresses = new ArrayList<>();
             addresses.add(address);
             user.setAddresses(addresses);
 
-            // Đăng ký user mới
             userService.registerNewUser(user);
             redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
             return "redirect:/login";

@@ -21,13 +21,14 @@ public class Review {
     @Column(nullable = false)
     private Integer rating;
 
-    @Column(length = 1000)
     private String comment;
 
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Date createdAt;
 
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private Date updatedAt;
 
     // Getters and Setters

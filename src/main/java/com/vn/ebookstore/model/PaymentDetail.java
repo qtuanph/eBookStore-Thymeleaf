@@ -1,11 +1,13 @@
 package com.vn.ebookstore.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
 @Table(name = "payment_details")
 public class PaymentDetail {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -14,9 +16,16 @@ public class PaymentDetail {
     @JoinColumn(name = "order_id")
     private OrderDetail order;
 
-    private Long amount;
-    private String provider;  // COD, BANKING, etc.
-    private String status;    // PENDING, SUCCESS, FAILED
+    @Column(name = "amount")
+    private BigDecimal amount;
+
+    @Column(name = "provider")
+    private String provider;
+
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "created_at", updatable = false)
     private Date createdAt;
     private Date updatedAt;
 
@@ -28,11 +37,19 @@ public class PaymentDetail {
         this.id = id;
     }
 
-    public Long getAmount() {
+    public OrderDetail getOrder() {
+        return order;
+    }
+
+    public void setOrder(OrderDetail order) {
+        this.order = order;
+    }
+
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Long amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -60,19 +77,7 @@ public class PaymentDetail {
         this.createdAt = createdAt;
     }
 
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public OrderDetail getOrder() {
-        return order;
-    }
-
-    public void setOrder(OrderDetail order) {
-        this.order = order;
     }
 }

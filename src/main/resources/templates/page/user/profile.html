@@ -55,16 +55,18 @@
                             <div class="col-md-3 text-center mb-4">
                                 <div class="position-relative">
                                      <!-- Nếu có avatar -->
-                                    <img th:if="${#authentication.principal.avatar != null}"
-                                        th:src="@{'/image/avatar/' + ${#authentication.principal.avatar}}"
+                                     <img th:if="${user.avatar != null and !#strings.isEmpty(user.avatar)}"
+                                        th:src="@{'/image/avatar/' + ${user.avatar}}"
                                         class="rounded-circle img-thumbnail"
-                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
+                                        style="width: 150px; height: 150px; object-fit: cover;" 
+                                        alt="Avatar" />
 
                                     <!-- Nếu không có avatar -->
-                                    <img th:unless="${#authentication.principal.avatar != null}"
+                                    <img th:unless="${user.avatar != null and !#strings.isEmpty(user.avatar)}"
                                         th:src="@{/image/avatar/default-avatar.jpg}"
                                         class="rounded-circle img-thumbnail"
-                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Default Avatar" />
+                                        style="width: 150px; height: 150px; object-fit: cover;" 
+                                        alt="Default Avatar" />
                                 </div>
                             </div>
                             <!-- User Details -->

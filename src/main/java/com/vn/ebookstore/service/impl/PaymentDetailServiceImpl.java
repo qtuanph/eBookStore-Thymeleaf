@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -22,19 +23,8 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
     private OrderDetailRepository orderDetailRepository;
 
     @Override
-    @Transactional
-    public PaymentDetail createPayment(Integer orderId, String paymentMethod, Long amount) {
-        OrderDetail order = orderDetailRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        PaymentDetail payment = new PaymentDetail();
-        payment.setOrder(order);
-        payment.setAmount(amount);
-        payment.setProvider(paymentMethod);
-        payment.setStatus("PENDING");
-        payment.setCreatedAt(new Date());
-        
-        return paymentDetailRepository.save(payment);
+    public PaymentDetail createPayment(Integer orderId, String paymentMethod, BigDecimal amount) {
+        return null;
     }
 
     @Override
@@ -54,14 +44,14 @@ public class PaymentDetailServiceImpl implements PaymentDetailService {
         PaymentDetail payment = getPaymentById(paymentId);
         payment.setStatus(status);
         payment.setUpdatedAt(new Date());
-        
+
         // Nếu thanh toán thành công, cập nhật trạng thái đơn hàng
         if ("SUCCESS".equals(status)) {
             OrderDetail order = payment.getOrder();
             order.setStatus("CONFIRMED");
             orderDetailRepository.save(order);
         }
-        
+
         return paymentDetailRepository.save(payment);
     }
 

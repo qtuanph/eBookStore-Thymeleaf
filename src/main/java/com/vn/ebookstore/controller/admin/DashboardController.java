@@ -9,12 +9,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
-public class AdminController {
+public class DashboardController {
 
     @Autowired
     private OrderDetailService orderDetailService;
@@ -22,7 +23,7 @@ public class AdminController {
     @Autowired
     private OrderDetailRepository orderDetailRepository;
 
-    @Autowired 
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -33,27 +34,27 @@ public class AdminController {
         try {
             // Tổng số đơn hàng
             long totalOrders = orderDetailService.getTotalOrders();
-            
+
             // Tổng doanh thu
-            double totalRevenue = orderDetailService.getTotalRevenue();
-            
+            BigDecimal totalRevenue = orderDetailService.getTotalRevenue();
+
             // Tổng số người dùng
             long totalUsers = userService.getTotalUsers();
-            
+
             // Tổng số sản phẩm
             long totalProducts = bookService.getTotalBooks();
 
             // Lấy tất cả đơn hàng
             PageRequest allOrdersRequest = PageRequest.of(0, Integer.MAX_VALUE);
             List<OrderDetail> allOrders = orderDetailRepository.findTopNByOrderByCreatedAtDesc(allOrdersRequest);
-            model.addAttribute("recentOrders", allOrders); // Giữ tên attribute là recentOrders để tránh sửa template
+            model.addAttribute("recentOrders", allOrders);
 
             // Lấy dữ liệu doanh thu 7 ngày
             PageRequest last7DaysRequest = PageRequest.of(0, 7);
             List<OrderDetail> ordersLast7Days = orderDetailRepository.findTopNByOrderByCreatedAtDesc(last7DaysRequest);
-            List<Double> salesData = new ArrayList<>();
+            List<BigDecimal> salesData = new ArrayList<>();
             for (OrderDetail order : ordersLast7Days) {
-                salesData.add((double) order.getTotal());
+                salesData.add(order.getTotal());
             }
 
             // Thống kê trạng thái đơn hàng
@@ -73,12 +74,10 @@ public class AdminController {
             model.addAttribute("orderStatusData", orderStatusData);
 
             return "page/admin/dashboard";
-            
+
         } catch (Exception e) {
             model.addAttribute("error", "Có lỗi xảy ra khi tải dữ liệu: " + e.getMessage());
             return "page/admin/dashboard";
         }
     }
-
-    // Other admin endpoints will go here...
 }

@@ -1,6 +1,7 @@
 package com.vn.ebookstore.controller.user;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,15 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -45,6 +38,7 @@ import com.vn.ebookstore.model.Address;
 import com.vn.ebookstore.model.Book;
 import com.vn.ebookstore.model.Cart;
 import com.vn.ebookstore.model.Category;
+import com.vn.ebookstore.model.Coupon;
 import com.vn.ebookstore.model.OrderDetail;
 import com.vn.ebookstore.model.PaymentDetail;
 import com.vn.ebookstore.model.Review;
@@ -55,6 +49,7 @@ import com.vn.ebookstore.service.AddressService;
 import com.vn.ebookstore.service.BookService;
 import com.vn.ebookstore.service.CartService;
 import com.vn.ebookstore.service.CategoryService;
+import com.vn.ebookstore.service.CouponService;
 import com.vn.ebookstore.service.OrderDetailService;
 import com.vn.ebookstore.service.PaymentDetailService;
 import com.vn.ebookstore.service.ReviewService;
@@ -65,7 +60,7 @@ import com.vn.ebookstore.service.WishlistService;
 @RequestMapping("/user")
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-    // Dependencies injection
+
     @Autowired
     private CategoryService categoryService;
     @Autowired
@@ -81,40 +76,32 @@ public class UserController {
     @Autowired
     private ReviewService reviewService;
     @Autowired
-    private AddressService addressService; // Thêm service quản lý địa chỉ
+    private AddressService addressService;
     @Autowired
-    private OrderDetailService orderDetailService; // Thay đổi service
-
+    private OrderDetailService orderDetailService;
     @Autowired
-    private PaymentDetailService paymentDetailService; // Add PaymentDetailService
+    private PaymentDetailService paymentDetailService;
+    @Autowired
+    private CouponService couponService;
 
-    // ==================== Page Navigation Mappings ====================
-    @GetMapping("/home") 
+    @GetMapping("/home")
     public String home(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
-        
-        // Lấy tối đa 3 danh mục để hiển thị
         List<Category> featuredCategories = categories.subList(0, Math.min(3, categories.size()));
-        
-        // Get different book lists
         List<Book> latestBooks = bookService.getLatestBooks();
         List<Book> bestSellers = bookService.getBestSellers();
         List<Book> premiumBooks = bookService.getPremiumBooks();
-        
-        model.addAttribute("categories", categories);  // Cho dropdown menu
-        model.addAttribute("featuredCategories", featuredCategories); // Cho phần Featured Categories
+
+        model.addAttribute("categories", categories);
+        model.addAttribute("featuredCategories", featuredCategories);
         model.addAttribute("latestBooks", latestBooks);
         model.addAttribute("bestSellers", bestSellers);
         model.addAttribute("premiumBooks", premiumBooks);
-        
-        // Thêm đường dẫn mặc định cho ảnh
         model.addAttribute("defaultCoverUrl", "/image/covers/default-cover.jpg");
         model.addAttribute("defaultAvatarUrl", "/image/avatar/default-avatar.jpg");
-        
+
         if (principal != null) {
             User user = userService.getUserByEmail(principal.getName());
-
-            // Initialize cart
             Cart cart = cartService.getCurrentCartByUser(user);
             if (cart == null) {
                 cart = new Cart();
@@ -123,11 +110,8 @@ public class UserController {
                 cart = cartService.save(cart);
             }
             model.addAttribute("cart", cart);
-
-            // Initialize wishlist
             List<Wishlist> wishlists = wishlistService.getWishlistsByUser(user);
             model.addAttribute("wishlists", wishlists != null ? wishlists : new ArrayList<>());
-
             return "index";
         }
         return "redirect:/login";
@@ -178,7 +162,6 @@ public class UserController {
         return "page/user/order_tracking";
     }
 
-    // ==================== Product Related Mappings ====================
     @GetMapping("/products")
     public String products(
             @RequestParam(required = false) Integer categoryId,
@@ -188,10 +171,9 @@ public class UserController {
             @RequestParam(required = false) Float minRating,
             @RequestParam(required = false, defaultValue = "newest") String sortBy,
             @RequestParam(required = false, defaultValue = "desc") String sortDir,
-            Model model, 
+            Model model,
             Principal principal) {
-        
-        // Parse giá từ String sang Double với xử lý null/empty
+
         Double minPriceDouble = null;
         Double maxPriceDouble = null;
         try {
@@ -202,13 +184,11 @@ public class UserController {
                 maxPriceDouble = Double.valueOf(maxPrice.replace(",", ""));
             }
         } catch (NumberFormatException e) {
-            // Log lỗi và dùng giá trị mặc định
             logger.warn("Error parsing price values: " + e.getMessage());
             minPriceDouble = 0.0;
             maxPriceDouble = null;
         }
 
-        // Validate price range và rating
         if (minPriceDouble != null && minPriceDouble < 0) minPriceDouble = 0.0;
         if (maxPriceDouble != null && maxPriceDouble < 0) maxPriceDouble = null;
         if (minPriceDouble != null && maxPriceDouble != null && minPriceDouble > maxPriceDouble) {
@@ -217,7 +197,6 @@ public class UserController {
             maxPriceDouble = temp;
         }
 
-        // Validate sort parameters
         if (!Arrays.asList("newest", "price", "rating").contains(sortBy)) {
             sortBy = "newest";
         }
@@ -227,16 +206,15 @@ public class UserController {
 
         List<Category> categories = categoryService.getAllCategories();
         List<Book> books = bookService.filterAndSortBooks(
-            categoryId, 
-            subCategoryId,
-            minPriceDouble, 
-            maxPriceDouble,
-            sortBy,
-            sortDir,
-            minRating
+                categoryId,
+                subCategoryId,
+                minPriceDouble,
+                maxPriceDouble,
+                sortBy,
+                sortDir,
+                minRating
         );
 
-        // Get price range for filter
         Double lowestPrice = bookService.getLowestPrice();
         Double highestPrice = bookService.getHighestPrice();
 
@@ -248,7 +226,6 @@ public class UserController {
             model.addAttribute("wishlists", wishlists);
         }
 
-        // Add attributes to model
         model.addAttribute("categories", categories);
         model.addAttribute("books", books);
         model.addAttribute("lowestPrice", lowestPrice);
@@ -281,20 +258,16 @@ public class UserController {
 
     @GetMapping("/book/{id}")
     public String viewBookDetail(@PathVariable Integer id, Model model, Principal principal) {
-        // Lấy danh sách categories (đồng bộ với các controller khác)
         List<Category> categories = categoryService.getAllCategories();
         model.addAttribute("categories", categories);
 
-        // Lấy thông tin sách
         Optional<Book> bookOptional = bookService.findById(id);
         if (bookOptional.isPresent()) {
             Book book = bookOptional.get();
             model.addAttribute("book", book);
 
-            // Kiểm tra và xử lý nếu người dùng đã đăng nhập
             if (principal != null) {
                 User user = userService.getUserByEmail(principal.getName());
-                // Lấy giỏ hàng
                 Cart cart = cartService.getCurrentCartByUser(user);
                 if (cart == null) {
                     cart = new Cart();
@@ -303,8 +276,6 @@ public class UserController {
                     cart = cartService.save(cart);
                 }
                 model.addAttribute("cart", cart);
-
-                // Lấy danh sách wishlist
                 List<Wishlist> wishlists = wishlistService.getWishlistsByUser(user);
                 model.addAttribute("wishlists", wishlists != null ? wishlists : new ArrayList<>());
             }
@@ -315,7 +286,6 @@ public class UserController {
         }
     }
 
-    // ==================== Cart Related Mappings ====================
     @GetMapping("/cart")
     public String cart(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
@@ -333,9 +303,9 @@ public class UserController {
 
     @PostMapping("/cart/add/{bookId}")
     @ResponseBody
-    public ResponseEntity<?> addToCart(@PathVariable("bookId") int bookId, 
-                                     @RequestParam("quantity") int quantity,
-                                     Principal principal) {
+    public ResponseEntity<?> addToCart(@PathVariable("bookId") int bookId,
+                                       @RequestParam("quantity") int quantity,
+                                       Principal principal) {
         try {
             User user = userService.getUserByEmail(principal.getName());
             cartService.addToCart(user.getId(), bookId, quantity);
@@ -350,8 +320,8 @@ public class UserController {
 
     @PostMapping("/cart/remove/{bookId}")
     @ResponseBody
-    public ResponseEntity<?> removeFromCart(@PathVariable("bookId") int bookId, 
-                                          Principal principal) {
+    public ResponseEntity<?> removeFromCart(@PathVariable("bookId") int bookId,
+                                            Principal principal) {
         try {
             User user = userService.getUserByEmail(principal.getName());
             cartService.removeFromCart(user.getId(), bookId);
@@ -382,6 +352,51 @@ public class UserController {
         }
     }
 
+    @PostMapping("/cart/apply-coupon")
+    @ResponseBody
+    public ResponseEntity<?> applyCouponToCart(@RequestParam("cartId") Integer cartId,
+                                               @RequestParam("couponCode") String couponCode,
+                                               Principal principal) {
+        try {
+            User user = userService.getUserByEmail(principal.getName());
+            Cart cart = cartService.getCartById(cartId);
+            if (!cart.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Không có quyền áp dụng mã giảm giá"));
+            }
+            cartService.applyCoupon(cartId, couponCode);
+            Cart updatedCart = cartService.getCartById(cartId);
+            return ResponseEntity.ok().body(Map.of(
+                    "message", "Áp dụng mã giảm giá thành công",
+                    "subTotal", updatedCart.getSubTotal(),
+                    "discountAmount", updatedCart.getDiscountAmount(),
+                    "total", updatedCart.getTotal()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/cart/remove-coupon")
+    @ResponseBody
+    public ResponseEntity<?> removeCouponFromCart(@RequestParam("cartId") Integer cartId,
+                                                  Principal principal) {
+        try {
+            User user = userService.getUserByEmail(principal.getName());
+            Cart cart = cartService.getCartById(cartId);
+            if (!cart.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Không có quyền xóa mã giảm giá"));
+            }
+            cartService.removeCoupon(cartId);
+            Cart updatedCart = cartService.getCartById(cartId);
+            return ResponseEntity.ok().body(Map.of(
+                    "message", "Xóa mã giảm giá thành công",
+                    "subTotal", updatedCart.getSubTotal(),
+                    "discountAmount", updatedCart.getDiscountAmount(),
+                    "total", updatedCart.getTotal()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/cart/clear")
     @ResponseBody
     public ResponseEntity<?> clearCart(Principal principal) {
@@ -397,7 +412,6 @@ public class UserController {
         }
     }
 
-    // ==================== Wishlist Related Mappings ====================
     @GetMapping("/wishlist")
     public String wishlist(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
@@ -415,8 +429,8 @@ public class UserController {
 
     @PostMapping("/wishlist/toggle/{bookId}")
     @ResponseBody
-    public ResponseEntity<?> toggleWishlist(@PathVariable("bookId") int bookId, 
-                                          Principal principal) {
+    public ResponseEntity<?> toggleWishlist(@PathVariable("bookId") int bookId,
+                                            Principal principal) {
         try {
             User user = userService.getUserByEmail(principal.getName());
             wishlistService.toggleWishlist(user.getId(), bookId);
@@ -443,7 +457,6 @@ public class UserController {
         }
     }
 
-    // ==================== Review Related Mappings ====================
     @PostMapping("/review/add")
     public String addReview(
             @RequestParam("bookId") Integer bookId,
@@ -458,14 +471,12 @@ public class UserController {
             }
 
             User user = userService.getUserByEmail(principal.getName());
-            
-            // Kiểm tra xem người dùng đã đánh giá chưa
+
             if (reviewService.hasUserReviewedBook(user.getId(), bookId)) {
                 redirectAttributes.addFlashAttribute("error", "Bạn đã đánh giá cuốn sách này rồi");
                 return "redirect:/user/book/" + bookId;
             }
 
-            // Validate rating
             if (rating < 1 || rating > 5) {
                 redirectAttributes.addFlashAttribute("error", "Đánh giá không hợp lệ");
                 return "redirect:/user/book/" + bookId;
@@ -480,15 +491,14 @@ public class UserController {
             review.setRating(rating);
             review.setComment(comment);
             review.setCreatedAt(new Date());
-            
+
             reviewService.saveReview(review);
-            
-            // Cập nhật average rating cho sách
+
             book.updateAverageRating();
             bookService.save(book);
-            
+
             redirectAttributes.addFlashAttribute("success", "Đã thêm đánh giá thành công");
-            
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi khi thêm đánh giá: " + e.getMessage());
         }
@@ -506,26 +516,24 @@ public class UserController {
             User user = userService.getUserByEmail(principal.getName());
             Review review = reviewService.findById(reviewId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá"));
-            
-            // Kiểm tra quyền sở hữu review
+
             if (!Objects.equals(review.getUser().getId(), user.getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Không có quyền sửa đánh giá này"));
             }
 
-            // Validate rating
             if (rating < 1 || rating > 5) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Đánh giá phải từ 1 đến 5 sao"));
             }
-            
+
             review.setRating(rating);
             review.setComment(comment);
             review.setUpdatedAt(new Date());
-            
+
             Review updatedReview = reviewService.saveReview(review);
             return ResponseEntity.ok().body(Map.of(
-                "success", true,
-                "review", updatedReview,
-                "message", "Đã cập nhật đánh giá thành công"
+                    "success", true,
+                    "review", updatedReview,
+                    "message", "Đã cập nhật đánh giá thành công"
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -541,16 +549,15 @@ public class UserController {
             User user = userService.getUserByEmail(principal.getName());
             Review review = reviewService.findById(reviewId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá"));
-            
-            // Kiểm tra quyền sở hữu review
+
             if (!Objects.equals(review.getUser().getId(), user.getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Không có quyền xóa đánh giá này"));
             }
-            
+
             reviewService.deleteReview(reviewId);
             return ResponseEntity.ok().body(Map.of(
-                "success", true,
-                "message", "Đã xóa đánh giá thành công"
+                    "success", true,
+                    "message", "Đã xóa đánh giá thành công"
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -561,26 +568,21 @@ public class UserController {
     public String showUserReviews(Model model, Principal principal) {
         if (principal != null) {
             User user = userService.getUserByEmail(principal.getName());
-            
-            // Add common attributes
             List<Category> categories = categoryService.getAllCategories();
             Cart cart = cartService.getCurrentCartByUser(user);
             List<Wishlist> wishlists = wishlistService.getWishlistsByUser(user);
-            
-            // Get user's reviews
             List<Review> reviews = reviewService.findByUserId(user.getId());
-            
+
             model.addAttribute("categories", categories);
             model.addAttribute("cart", cart);
             model.addAttribute("wishlists", wishlists != null ? wishlists : new ArrayList<>());
             model.addAttribute("reviews", reviews);
-            
+
             return "page/user/review";
         }
         return "redirect:/login";
     }
 
-    // ==================== User Profile & Settings Mappings ====================
     @GetMapping("/profile")
     public String showProfile(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
@@ -642,24 +644,22 @@ public class UserController {
 
     @PostMapping("/profile/update-username")
     public String updateUsername(@RequestParam("newUsername") String newUsername,
-                               @RequestParam("confirmPassword") String confirmPassword,
-                               Principal principal,
-                               RedirectAttributes redirectAttributes) {
+                                 @RequestParam("confirmPassword") String confirmPassword,
+                                 Principal principal,
+                                 RedirectAttributes redirectAttributes) {
         try {
             User user = userService.getUserByEmail(principal.getName());
-            
-            // Verify password
+
             if (!passwordEncoder.matches(confirmPassword, user.getPassword())) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu không đúng");
                 return "redirect:/user/profile";
             }
-            
-            // Check if username is taken
+
             if (userService.existsByUsername(newUsername)) {
                 redirectAttributes.addFlashAttribute("error", "Tên đăng nhập đã tồn tại");
                 return "redirect:/user/profile";
             }
-            
+
             user.setUsername(newUsername);
             userService.save(user);
             redirectAttributes.addFlashAttribute("success", "Đã cập nhật tên đăng nhập thành công");
@@ -694,20 +694,17 @@ public class UserController {
             RedirectAttributes redirectAttributes) {
         try {
             User currentUser = userService.getUserByEmail(principal.getName());
-            
-            // Validate email
+
             if (!email.equals(currentUser.getEmail()) && userService.checkEmailExists(email)) {
                 redirectAttributes.addFlashAttribute("error", "Email đã được sử dụng");
                 return "redirect:/user/profile";
             }
 
-            // Update user information
             currentUser.setFirstName(firstName);
             currentUser.setLastName(lastName);
             currentUser.setEmail(email);
             currentUser.setPhoneNumber(phoneNumber);
 
-            // Parse ngày sinh
             try {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
                 dateFormat.setLenient(false);
@@ -720,12 +717,11 @@ public class UserController {
                 redirectAttributes.addFlashAttribute("error", "Định dạng ngày sinh không hợp lệ (dd/MM/yyyy)");
                 return "redirect:/user/profile";
             }
-            
-            // Sửa đường dẫn lưu avatar
+
             if (avatar != null && !avatar.isEmpty()) {
                 String uploadDir = "src/main/resources/static/image/avatar";
                 String oldAvatarPath = null;
-                
+
                 if (currentUser.getAvatar() != null) {
                     oldAvatarPath = "src/main/resources/static" + currentUser.getAvatar();
                 }
@@ -755,7 +751,6 @@ public class UserController {
                 }
             }
 
-            // Update address
             if (currentUser.getAddresses() == null || currentUser.getAddresses().isEmpty()) {
                 Address address = new Address();
                 address.setUser(currentUser);
@@ -773,25 +768,23 @@ public class UserController {
 
             userService.save(currentUser);
 
-            // Cập nhật SecurityContext với thông tin mới
             UserDetailsImpl userDetails = new UserDetailsImpl(currentUser, new ArrayList<>());
             Authentication newAuth = new UsernamePasswordAuthenticationToken(
-                userDetails, 
-                null, 
-                userDetails.getAuthorities()
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
             );
             SecurityContextHolder.getContext().setAuthentication(newAuth);
 
             redirectAttributes.addFlashAttribute("success", "Thông tin cá nhân đã được cập nhật");
-            
+
         } catch (IOException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
-            return "redirect:/user/profile"; // Return to profile page on error
+            return "redirect:/user/profile";
         }
-        return "redirect:/user/profile"; // Redirect to home page on success
+        return "redirect:/user/profile";
     }
 
-    // ==================== Order Related Mappings ====================
     @GetMapping("/purchase")
     public String showPurchaseForm(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
@@ -814,44 +807,59 @@ public class UserController {
             @RequestParam("addressId") Integer addressId,
             @RequestParam("paymentMethod") String paymentMethod,
             @RequestParam(value = "note", required = false) String note,
+            @RequestParam(value = "couponCode", required = false) String couponCode,
             Principal principal,
             RedirectAttributes redirectAttributes) {
         try {
             User user = userService.getUserByEmail(principal.getName());
             Cart cart = cartService.getCurrentCartByUser(user);
-            
-            // Kiểm tra giỏ hàng
+
             if (cart == null || cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Giỏ hàng trống!");
                 return "redirect:/user/cart";
             }
 
-            // Kiểm tra địa chỉ
             Address shippingAddress = addressService.getAddressById(addressId);
             if (shippingAddress == null || !Objects.equals(shippingAddress.getUser().getId(), user.getId())) {
                 redirectAttributes.addFlashAttribute("error", "Địa chỉ không hợp lệ!");
                 return "redirect:/user/purchase";
             }
 
-            // Tạo đơn hàng mới
-            OrderDetail order = orderDetailService.createOrder(user.getId(), addressId, paymentMethod, note);
-            
+            Coupon coupon = null;
+            if (couponCode != null && !couponCode.trim().isEmpty()) {
+                Optional<Coupon> couponOpt = couponService.findByCode(couponCode);
+                if (couponOpt.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", "Mã giảm giá không hợp lệ!");
+                    return "redirect:/user/purchase";
+                }
+                coupon = couponOpt.get();
+                BigDecimal subtotal = cart.getCartItems().stream()
+                        .filter(item -> item.getUpdatedAt() == null)
+                        .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (!couponService.isValidForUse(coupon, subtotal)) {
+                    redirectAttributes.addFlashAttribute("error", "Mã giảm giá không thể sử dụng!");
+                    return "redirect:/user/purchase";
+                }
+            }
+
+            OrderDetail order = orderDetailService.createOrder(user.getId(), addressId, paymentMethod, note, coupon);
             if (order != null) {
-                // Xóa giỏ hàng cũ sau khi đặt hàng thành công
+                if (coupon != null) {
+                    couponService.useCoupon(coupon);
+                }
                 cartService.deleteCart(cart.getId());
-                
-                // Tạo giỏ hàng mới cho user
                 Cart newCart = new Cart();
                 newCart.setUser(user);
                 newCart.setCreatedAt(new Date());
                 cartService.save(newCart);
-                
+
                 redirectAttributes.addFlashAttribute("success", "Đặt hàng thành công!");
                 return "redirect:/user/orders";
             } else {
                 throw new RuntimeException("Không thể tạo đơn hàng!");
             }
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
             return "redirect:/user/purchase";
         }
@@ -880,29 +888,28 @@ public class UserController {
         try {
             User user = userService.getUserByEmail(principal.getName());
             OrderDetail order = orderDetailService.getOrderById(orderId);
-            
+
             if (order == null) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Không tìm thấy đơn hàng!"));
-            }
-            
-            if (!Objects.equals(order.getUser().getId(), user.getId())) {
-                return ResponseEntity.status(403)
-                    .body(Map.of("error", "Không có quyền hủy đơn hàng này"));
+                        .body(Map.of("error", "Không tìm thấy đơn hàng!"));
             }
 
-            // Sửa điều kiện kiểm tra trạng thái đơn hàng
+            if (!Objects.equals(order.getUser().getId(), user.getId())) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "Không có quyền hủy đơn hàng này"));
+            }
+
             if (!("PENDING".equals(order.getStatus()) || "CONFIRMED".equals(order.getStatus()))) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận"));
+                        .body(Map.of("error", "Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận"));
             }
 
             orderDetailService.cancelOrder(orderId);
             return ResponseEntity.ok()
-                .body(Map.of("message", "Hủy đơn hàng thành công"));
+                    .body(Map.of("message", "Hủy đơn hàng thành công"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -912,26 +919,25 @@ public class UserController {
         try {
             User user = userService.getUserByEmail(principal.getName());
             OrderDetail order = orderDetailService.getOrderById(orderId);
-            
+
             if (order == null) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Không tìm thấy đơn hàng!"));
-            }
-            
-            if (!Objects.equals(order.getUser().getId(), user.getId())) {
-                return ResponseEntity.status(403)
-                    .body(Map.of("error", "Không có quyền thanh toán đơn hàng này"));
+                        .body(Map.of("error", "Không tìm thấy đơn hàng!"));
             }
 
-            // Giả lập thanh toán thành công
+            if (!Objects.equals(order.getUser().getId(), user.getId())) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "Không có quyền thanh toán đơn hàng này"));
+            }
+
             PaymentDetail payment = order.getPayments().get(0);
             paymentDetailService.updatePaymentStatus(payment.getId(), "SUCCESS");
-            
+
             return ResponseEntity.ok()
-                .body(Map.of("message", "Thanh toán thành công"));
+                    .body(Map.of("message", "Thanh toán thành công"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }

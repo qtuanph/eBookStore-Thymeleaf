@@ -1,7 +1,7 @@
+<!-- ====================== review.html (User) ====================== -->
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-    xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
-
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,172 +10,93 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/index_style.css}">
     <link rel="stylesheet" th:href="@{/css/review_style.css}">
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-        crossorigin="anonymous"></script>
 </head>
-
 <body class="bg-light">
-    <th:block th:replace="~{index :: header}"></th:block>
-
-    <div class="container py-5">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-lg-3 mb-4">
-                <div th:replace="~{fragments/user_sidebar :: sidebar('reviews')}"></div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-lg-9">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white">
-                        <h5 class="card-title mb-0">Đánh giá của tôi</h5>
-                    </div>
-                    <div class="card-body">
-                        <!-- Thông báo -->
-                        <div th:if="${success}" class="alert alert-success" role="alert">
-                            <span th:text="${success}">Success message</span>
-                        </div>
-                        <div th:if="${error}" class="alert alert-danger" role="alert">
-                            <span th:text="${error}">Error message</span>
-                        </div>
-
-                        <!-- Danh sách đánh giá -->
-                        <div th:if="${!#lists.isEmpty(reviews)}" class="reviews-list">
-                            <div th:each="review : ${reviews}" class="review-card card mb-3">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <!-- Ảnh sách -->
-                                        <div class="col-md-2 text-center">
-                                            <img th:if="${review.book.cover != null}" 
-                                                 th:src="${review.book.cover}"
-                                                 class="book-cover rounded" 
-                                                 th:alt="${review.book.title}">
-                                            <img th:unless="${review.book.cover != null}"
-                                                 th:src="@{/image/default-book-cover.png}"
-                                                 class="book-cover rounded"
-                                                 alt="Default Cover">
-                                        </div>
-                                        <!-- Thông tin đánh giá -->
-                                        <div class="col-md-10">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <a th:href="@{/user/book/{id}(id=${review.book.id})}" 
-                                                   class="h5 text-decoration-none" 
-                                                   th:text="${review.book.title}">
-                                                    Tên sách
-                                                </a>
-                                                <div class="btn-group">
-                                                    <button class="btn btn-sm btn-outline-primary" 
-                                                            th:onclick="'editReview(' + ${review.id} + ')'">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-danger" 
-                                                            th:onclick="'deleteReview(' + ${review.id} + ')'">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
+<th:block th:replace="~{index :: header}"></th:block>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div th:replace="~{fragments/user_sidebar :: sidebar('reviews')}"></div>
+        </div>
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h5>Đánh giá của tôi</h5></div>
+                <div class="card-body">
+                    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                    <div th:if="${!#lists.isEmpty(reviews)}">
+                        <div th:each="review : ${reviews}" class="review-card card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2 text-center">
+                                        <img th:src="${review.book.cover != null ? review.book.cover : '/image/default-book-cover.png'}" class="book-cover rounded" th:alt="${review.book.title}">
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <a th:href="@{/user/book/{id}(id=${review.book.id})}" class="h5 text-decoration-none" th:text="${review.book.title}"></a>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" th:onclick="'editReview(' + ${review.id} + ')'">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteReview(' + ${review.id} + ')'">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
-                                            <div class="rating-stars mb-2">
-                                                <i th:each="i : ${#numbers.sequence(1, 5)}"
-                                                   th:class="${i <= review.rating ? 'fas' : 'far'} + ' fa-star'"></i>
-                                            </div>
-                                            <p class="card-text" th:text="${review.comment}">Nội dung đánh giá</p>
-                                            <small class="text-muted">
-                                                Đánh giá vào: 
-                                                <span th:text="${#dates.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">
-                                                    01/01/2024
-                                                </span>
-                                            </small>
                                         </div>
+                                        <div class="rating-stars mb-2">
+                                            <i th:each="i : ${#numbers.sequence(1, 5)}" th:class="${i <= review.rating ? 'fas' : 'far'} + ' fa-star'"></i>
+                                        </div>
+                                        <p class="card-text" th:text="${review.comment}"></p>
+                                        <small class="text-muted">Đánh giá vào: <span th:text="${#dates.format(review.createdAt, 'dd/MM/yyyy HH:mm')}"></span></small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Hiển thị khi không có đánh giá -->
-                        <div th:if="${#lists.isEmpty(reviews)}" class="text-center py-5">
-                            <i class="fas fa-comment-alt fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Bạn chưa có đánh giá nào</p>
-                            <a href="/user/products" class="btn btn-primary">
-                                <i class="fas fa-book me-2"></i>Xem sách và viết đánh giá
-                            </a>
-                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(reviews)}" class="text-center py-5">
+                        <i class="fas fa-comment-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Bạn chưa có đánh giá nào</p>
+                        <a href="/user/products" class="btn btn-primary">
+                            <i class="fas fa-book me-2"></i>Xem sách và viết đánh giá
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Modal Sửa đánh giá -->
-    <div class="modal fade" id="editReviewModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sửa đánh giá</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editReviewForm">
-                        <input type="hidden" id="editReviewId">
-                        <div class="mb-3">
-                            <label class="form-label">Đánh giá:</label>
-                            <div class="rating-input mb-2">
-                                <i class="far fa-star rating-star-edit" data-rating="1"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="2"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="3"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="4"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="5"></i>
-                            </div>
-                            <input type="hidden" id="editRatingInput" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editReviewComment" class="form-label">Nhận xét:</label>
-                            <textarea class="form-control" id="editReviewComment" rows="3" required></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary" onclick="updateReview()">Cập nhật</button>
-                </div>
+</div>
+<div class="modal fade" id="editReviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sửa đánh giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="hidden" id="editReviewId">
+                    <label>Đánh giá:</label>
+                    <div>
+                        <i class="far fa-star rating-star-edit" data-rating="1"></i>
+                        <i class="far fa-star rating-star-edit" data-rating="2"></i>
+                        <i class="far fa-star rating-star-edit" data-rating="3"></i>
+                        <i class="far fa-star rating-star-edit" data-rating="4"></i>
+                        <i class="far fa-star rating-star-edit" data-rating="5"></i>
+                    </div>
+                    <label class="mt-2">Nhận xét:</label>
+                    <textarea class="form-control" id="editReviewComment" rows="3" required></textarea>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="updateReview()">Cập nhật</button>
             </div>
         </div>
     </div>
-
-    <th:block th:replace="~{index :: footer}"></th:block>
-
-    <script th:src="@{/js/cart.js}"></script>
-    <script th:src="@{/js/wishlist.js}"></script>
-    <script th:src="@{/js/search_book.js}"></script>
-
-    
-    <script>
-        function editReview(reviewId) {
-            // Implementation similar to product_detail.html
-        }
-
-        function updateReview() {
-            // Implementation similar to product_detail.html
-        }
-
-        function deleteReview(reviewId) {
-            if (confirm('Bạn có chắc muốn xóa đánh giá này?')) {
-                fetch(`/user/review/delete/${reviewId}`, {
-                    method: 'DELETE'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        throw new Error('Có lỗi xảy ra');
-                    }
-                })
-                .catch(error => alert(error.message));
-            }
-        }
-    </script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/review_user_script.js}"></script>
 </body>
 </html>
+
+

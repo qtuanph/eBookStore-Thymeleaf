@@ -1,6 +1,7 @@
 package com.vn.ebookstore.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -13,38 +14,38 @@ public class Coupon {
 
     @Column(unique = true, nullable = false)
     private String code;
-    
+
     private String description;
-    
+
     @Column(name = "discount_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
-    
+
     @Column(name = "discount_value", nullable = false)
-    private Double discountValue;
-    
+    private BigDecimal discountValue;
+
     @Column(name = "min_purchase")
-    private Double minPurchase;
-    
+    private BigDecimal minPurchase;
+
     @Column(name = "max_discount")
-    private Double maxDiscount;
-    
+    private BigDecimal maxDiscount;
+
     @Column(name = "start_date", nullable = false)
     private Date startDate;
-    
+
     @Column(name = "end_date", nullable = false)
     private Date endDate;
-    
+
     @Column(name = "usage_limit")
     private Integer usageLimit;
-    
+
     @Column(name = "times_used")
     private Integer timesUsed = 0;
-    
+
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Date createdAt;
 
     @OneToMany(mappedBy = "coupon")
@@ -58,7 +59,7 @@ public class Coupon {
         FIXED_AMOUNT
     }
 
-    // Add getters and setters
+    // Getters and setters
     public Integer getId() {
         return id;
     }
@@ -72,7 +73,7 @@ public class Coupon {
     }
 
     public void setCode(String code) {
-        this.code = code; 
+        this.code = code;
     }
 
     public String getDescription() {
@@ -91,27 +92,27 @@ public class Coupon {
         this.discountType = discountType;
     }
 
-    public Double getDiscountValue() {
+    public BigDecimal getDiscountValue() {
         return discountValue;
     }
 
-    public void setDiscountValue(Double discountValue) {
+    public void setDiscountValue(BigDecimal discountValue) {
         this.discountValue = discountValue;
     }
 
-    public Double getMinPurchase() {
+    public BigDecimal getMinPurchase() {
         return minPurchase;
     }
 
-    public void setMinPurchase(Double minPurchase) {
+    public void setMinPurchase(BigDecimal minPurchase) {
         this.minPurchase = minPurchase;
     }
 
-    public Double getMaxDiscount() {
+    public BigDecimal getMaxDiscount() {
         return maxDiscount;
     }
 
-    public void setMaxDiscount(Double maxDiscount) {
+    public void setMaxDiscount(BigDecimal maxDiscount) {
         this.maxDiscount = maxDiscount;
     }
 

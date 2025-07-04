@@ -100,15 +100,38 @@ CREATE TABLE wishlist (
     deleted_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (book_id) REFERENCES books(id)
-);-- Bảng cart: Lưu giỏ hàng của người dùng
+);
+-- Bảng coupons: Lưu thông tin mã giảm giá
+CREATE TABLE coupons (
+                         id INT PRIMARY KEY AUTO_INCREMENT,
+                         code VARCHAR(50) UNIQUE NOT NULL,
+                         description TEXT,
+                         discount_type ENUM('PERCENTAGE', 'FIXED_AMOUNT') NOT NULL,
+                         discount_value DECIMAL(10,2) NOT NULL, -- Giá trị giảm (% hoặc số tiền cố định)
+                         min_purchase DECIMAL(10,2), -- Giá trị đơn hàng tối thiểu
+                         max_discount DECIMAL(10,2), -- Giảm tối đa (cho discount percentage)
+                         start_date DATETIME NOT NULL,
+                         end_date DATETIME NOT NULL,
+                         usage_limit INT, -- Giới hạn số lần sử dụng
+                         times_used INT DEFAULT 0,
+                         is_active BOOLEAN DEFAULT TRUE,
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng cart: Lưu giỏ hàng của người dùng
 CREATE TABLE cart (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    total BIGINT DEFAULT 0,  -- Tổng giá trị giỏ hàng (VNĐ)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);-- Bảng cart_item: Lưu chi tiết các mục trong giỏ hàng
+                      id INT PRIMARY KEY AUTO_INCREMENT,
+                      user_id INT,
+                      total BIGINT DEFAULT 0,  -- Tổng giá trị giỏ hàng (VNĐ)
+                      sub_total DECIMAL(10,2), -- Tổng tiền trước khi giảm giá
+                      discount_amount DECIMAL(10,2), -- Số tiền giảm giá
+                      coupon_id INT, -- Mã giảm giá áp dụng
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                      FOREIGN KEY (user_id) REFERENCES users(id),
+                      FOREIGN KEY (coupon_id) REFERENCES coupons(id)
+);
+-- Bảng cart_item: Lưu chi tiết các mục trong giỏ hàng
 CREATE TABLE cart_item (
     id INT PRIMARY KEY AUTO_INCREMENT,
     cart_id INT,
@@ -144,7 +167,7 @@ CREATE TABLE order_item (
 CREATE TABLE payment_details (
     id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT,
-    amount BIGINT,  -- Số tiền thanh toán (VNĐ)
+    amount DECIMAL(10,2),  -- Số tiền thanh toán (VNĐ)
     provider VARCHAR(255),
     status VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -163,24 +186,10 @@ CREATE TABLE user_roles (
     PRIMARY KEY (user_id, role_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (role_id) REFERENCES roles(id)
-);-- Bảng coupons: Lưu thông tin mã giảm giá 
-CREATE TABLE coupons (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    code VARCHAR(50) UNIQUE NOT NULL,
-    description TEXT,
-    discount_type ENUM('PERCENTAGE', 'FIXED_AMOUNT') NOT NULL,
-    discount_value DECIMAL(10,2) NOT NULL, -- Giá trị giảm (% hoặc số tiền cố định)
-    min_purchase DECIMAL(10,2), -- Giá trị đơn hàng tối thiểu
-    max_discount DECIMAL(10,2), -- Giảm tối đa (cho discount percentage)
-    start_date DATETIME NOT NULL,
-    end_date DATETIME NOT NULL,
-    usage_limit INT, -- Giới hạn số lần sử dụng
-    times_used INT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);-- Bảng user_coupons: Lưu lịch sử sử dụng mã giảm giá
+);-- Bảng coupons: Lưu thông tin mã giảm giá
+-- Bảng user_coupons: Lưu lịch sử sử dụng mã giảm giá
 CREATE TABLE user_coupons (
-    id INT PRIMARY KEY AUTO_INCREMENT, 
+    id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     coupon_id INT,
     order_id INT,

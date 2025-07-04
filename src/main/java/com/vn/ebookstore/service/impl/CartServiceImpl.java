@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -46,7 +47,9 @@ public class CartServiceImpl implements CartService {
             cart.setCartItems(new ArrayList<>());
         }
         cart.setCreatedAt(new Date());
-        cart.setTotal(0L);
+        cart.setTotal(BigDecimal.ZERO);
+        cart.setSubTotal(BigDecimal.ZERO);
+        cart.setDiscountAmount(BigDecimal.ZERO);
         return cartRepository.save(cart);
     }
 
@@ -56,6 +59,8 @@ public class CartServiceImpl implements CartService {
         Cart existingCart = cartRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng với ID: " + id));
         existingCart.setTotal(cart.getTotal());
+        existingCart.setSubTotal(cart.getSubTotal());
+        existingCart.setDiscountAmount(cart.getDiscountAmount());
         return cartRepository.save(existingCart);
     }
 
@@ -91,20 +96,18 @@ public class CartServiceImpl implements CartService {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
         }
-        
+
         Cart cart = getCurrentCart(userId);
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với ID: " + bookId));
 
         Optional<CartItem> existingItem = cartItemRepository.findByCartIdAndBookIdAndUpdatedAtIsNull(cart.getId(), bookId);
-        
+
         if (existingItem.isPresent()) {
-            // Nếu sách đã có trong giỏ hàng, cập nhật số lượng
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + quantity);
             cartItemRepository.save(item);
         } else {
-            // Nếu sách chưa có trong giỏ hàng, thêm mới
             CartItem newItem = new CartItem();
             newItem.setCart(cart);
             newItem.setBook(book);
@@ -114,7 +117,6 @@ public class CartServiceImpl implements CartService {
             cartItemRepository.save(newItem);
         }
 
-        // Cập nhật tổng tiền của giỏ hàng
         updateCartTotal(cart);
     }
 
@@ -123,10 +125,10 @@ public class CartServiceImpl implements CartService {
     public void removeFromCart(int userId, int bookId) {
         Cart cart = getCurrentCart(userId);
         Optional<CartItem> item = cartItemRepository.findByCartIdAndBookIdAndUpdatedAtIsNull(cart.getId(), bookId);
-        
+
         if (item.isPresent()) {
             CartItem cartItem = item.get();
-            cartItem.setUpdatedAt(new Date()); // Đánh dấu là đã xóa
+            cartItem.setUpdatedAt(new Date());
             cartItemRepository.save(cartItem);
             updateCartTotal(cart);
         } else {
@@ -140,10 +142,10 @@ public class CartServiceImpl implements CartService {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
         }
-        
+
         Cart cart = getCurrentCart(userId);
         Optional<CartItem> item = cartItemRepository.findByCartIdAndBookIdAndUpdatedAtIsNull(cart.getId(), bookId);
-        
+
         if (item.isPresent()) {
             CartItem cartItem = item.get();
             cartItem.setQuantity(quantity);
@@ -160,18 +162,19 @@ public class CartServiceImpl implements CartService {
         if (user == null) {
             throw new IllegalArgumentException("User không thể là null");
         }
-        
-        Cart cart = cartRepository.findByUserAndUpdatedAtIsNull(user)  // This line uses the correct method name
+
+        Cart cart = cartRepository.findByUserAndUpdatedAtIsNull(user)
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
                     newCart.setUser(user);
-                    newCart.setTotal(0L);
+                    newCart.setTotal(BigDecimal.ZERO);
+                    newCart.setSubTotal(BigDecimal.ZERO);
+                    newCart.setDiscountAmount(BigDecimal.ZERO);
                     newCart.setCartItems(new ArrayList<>());
                     newCart.setCreatedAt(new Date());
                     return cartRepository.save(newCart);
                 });
 
-        // Đảm bảo cartItems không null và chỉ lấy các items chưa bị xóa
         if (cart.getCartItems() == null) {
             cart.setCartItems(new ArrayList<>());
         } else {
@@ -183,31 +186,39 @@ public class CartServiceImpl implements CartService {
 
         return cart;
     }
-    
+
     @Override
     @Transactional
     public Cart save(Cart cart) {
         if (cart.getCartItems() == null) {
             cart.setCartItems(new ArrayList<>());
         }
-        
+
         if (cart.getCreatedAt() == null) {
             cart.setCreatedAt(new Date());
         }
-        
+
         return cartRepository.save(cart);
     }
-    
+
     @Transactional
-    private void updateCartTotal(Cart cart) {
+    protected void updateCartTotal(Cart cart) {
         List<CartItem> items = cartItemRepository.findByCartIdAndUpdatedAtIsNull(cart.getId());
-        long total = 0;
-        
-        for (CartItem item : items) {
-            total += item.getPrice() * item.getQuantity();
+        BigDecimal subtotal = items.stream()
+                .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, BigDecimal.ROUND_HALF_UP);
+
+        cart.setSubTotal(subtotal);
+        if (cart.getCoupon() != null && couponService.isValidForUse(cart.getCoupon(), subtotal)) {
+            BigDecimal discount = couponService.calculateDiscount(cart.getCoupon(), subtotal);
+            cart.setDiscountAmount(discount);
+            cart.setTotal(subtotal.subtract(discount));
+        } else {
+            cart.setDiscountAmount(BigDecimal.ZERO);
+            cart.setTotal(subtotal);
         }
-        
-        cart.setTotal(total);
+
         cartRepository.save(cart);
     }
 
@@ -216,9 +227,9 @@ public class CartServiceImpl implements CartService {
     public void applyCoupon(Integer cartId, String couponCode) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
-        
-        double subtotal = calculateSubtotal(cart);
-        
+
+        BigDecimal subtotal = calculateSubtotal(cart);
+
         Coupon coupon = couponService.findByCode(couponCode)
                 .orElseThrow(() -> new RuntimeException("Invalid coupon code"));
 
@@ -226,27 +237,30 @@ public class CartServiceImpl implements CartService {
             throw new RuntimeException("Coupon cannot be applied");
         }
 
-        Double discount = couponService.calculateDiscount(coupon, subtotal);
+        BigDecimal discount = couponService.calculateDiscount(coupon, subtotal);
         cart.setCoupon(coupon);
         cart.setSubTotal(subtotal);
         cart.setDiscountAmount(discount);
-        cart.setTotal((long)(subtotal - discount));
-        
+        cart.setTotal(subtotal.subtract(discount));
+
         cartRepository.save(cart);
     }
 
     @Override
+    @Transactional
     public void removeCoupon(Integer cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
         cart.setCoupon(null);
-        cartRepository.save(cart);
+        cart.setDiscountAmount(BigDecimal.ZERO);
+        updateCartTotal(cart);
     }
 
-    private double calculateSubtotal(Cart cart) {
+    private BigDecimal calculateSubtotal(Cart cart) {
         return cart.getCartItems().stream()
                 .filter(item -> item.getUpdatedAt() == null)
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+                .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 }

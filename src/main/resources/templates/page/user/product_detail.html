@@ -96,6 +96,30 @@
         .star-rating label:hover ~ label {
             color: #ffd700;
         }
+
+        /* Toast custom style */
+        .toast {
+            border-radius: 8px;
+            opacity: 0.9;
+        }
+
+        .toast-header {
+            border-bottom: none;
+        }
+
+        .toast-body {
+            font-size: 16px;
+        }
+
+        .toast-footer {
+            display: flex;
+            justify-content: flex-end;
+            border-top: none;
+        }
+
+        .btn-close {
+            padding: 0.5rem 1rem;
+        }
     </style>
 </head>
 <body>
@@ -250,6 +274,20 @@
     <!-- Footer -->
     <div th:replace="~{index :: footer}"></div>
 
+    <!-- Toast container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="customToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Thông báo</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+            <div class="toast-footer d-none" id="toastFooter">
+                <button type="button" class="btn btn-sm btn-primary w-100" id="toastConfirmBtn">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
@@ -368,19 +406,22 @@
                     bootstrap.Modal.getInstance(document.getElementById('editReviewModal')).hide();
                     location.reload();
                 } else {
-                    alert(data.message || 'Có lỗi xảy ra khi cập nhật đánh giá');
+                    showToast(data.message || 'Có lỗi xảy ra khi cập nhật đánh giá', 'Lỗi');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra khi cập nhật đánh giá');
+                showToast('Có lỗi xảy ra khi cập nhật đánh giá', 'Lỗi');
             });
         }
 
         function confirmDeleteReview(reviewId) {
-            if (confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) {
-                deleteReview(reviewId);
-            }
+            showToast(
+                'Bạn có chắc chắn muốn xóa đánh giá này?',
+                'Xác nhận xóa',
+                true,
+                () => deleteReview(reviewId)
+            );
         }
 
         function deleteReview(reviewId) {
@@ -397,7 +438,7 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert(data.message || 'Có lỗi xảy ra khi xóa đánh giá');
+                    showToast(data.message || 'Có lỗi xảy ra khi xóa đánh giá', 'Lỗi');
                 }
             })
             .catch(error => {
@@ -412,6 +453,27 @@
             document.getElementById('editReviewComment').value = comment;
             
             new bootstrap.Modal(document.getElementById('editReviewModal')).show();
+        }
+
+        function showToast(message, title = 'Thông báo', isConfirm = false, confirmCallback = null) {
+            const toast = document.getElementById('customToast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastFooter = document.getElementById('toastFooter');
+            const confirmBtn = document.getElementById('toastConfirmBtn');
+
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            if (isConfirm) {
+                toastFooter.classList.remove('d-none');
+                confirmBtn.onclick = confirmCallback;
+            } else {
+                toastFooter.classList.add('d-none');
+            }
+
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
         }
     </script>
 

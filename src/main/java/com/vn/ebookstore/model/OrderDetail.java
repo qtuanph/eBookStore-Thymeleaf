@@ -1,6 +1,7 @@
 package com.vn.ebookstore.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -10,10 +11,15 @@ public class OrderDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private long total;
+
+    @Column(name = "total")
+    private BigDecimal total;
+
     private String status;
+
     @Column(updatable = false)
     private Date createdAt;
+
     private Date updatedAt;
 
     @ManyToOne
@@ -34,10 +40,10 @@ public class OrderDetail {
     private Coupon coupon;
 
     @Column(name = "discount_amount")
-    private Double discountAmount = 0.0;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(name = "sub_total")
-    private Double subTotal;
+    private BigDecimal subTotal;
 
     public int getId() {
         return id;
@@ -47,11 +53,11 @@ public class OrderDetail {
         this.id = id;
     }
 
-    public long getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
-    public void setTotal(long total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
@@ -119,19 +125,19 @@ public class OrderDetail {
         this.coupon = coupon;
     }
 
-    public Double getDiscountAmount() {
+    public BigDecimal getDiscountAmount() {
         return discountAmount;
     }
 
-    public void setDiscountAmount(Double discountAmount) {
+    public void setDiscountAmount(BigDecimal discountAmount) {
         this.discountAmount = discountAmount;
     }
 
-    public Double getSubTotal() {
+    public BigDecimal getSubTotal() {
         return subTotal;
     }
 
-    public void setSubTotal(Double subTotal) {
+    public void setSubTotal(BigDecimal subTotal) {
         this.subTotal = subTotal;
     }
 }

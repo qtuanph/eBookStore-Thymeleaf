@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý mã giảm giá - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin_style.css}">
+</head>
+<body class="bg-light">
+
+<div class="wrapper">
+    <div th:replace="~{fragments/admin_sidebar :: sidebar}"></div>
+    <div id="content" class="container-fluid p-4">
+
+        <!-- Thông báo -->
+        <div th:if="${param.success}" class="alert alert-success mb-2">
+            <span th:if="${param.success == 'created'}">Tạo mã giảm giá thành công!</span>
+            <span th:if="${param.success == 'updated'}">Cập nhật mã giảm giá thành công!</span>
+            <span th:if="${param.success == 'deleted'}">Xóa mã giảm giá thành công!</span>
+        </div>
+        <div th:if="${param.error}" class="alert alert-danger mb-2">
+            <span th:if="${param.error == 'not-found'}">Không tìm thấy mã giảm giá cần sửa hoặc xóa!</span>
+            <span th:unless="${param.error == 'not-found'}" th:text="${param.error}"></span>
+        </div>
+
+        <!-- Topbar -->
+        <div class="d-flex justify-content-between mb-4">
+            <div>
+                <h2 class="text-primary mb-0">🎫 Quản lý mã giảm giá</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Mã giảm giá</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <span th:text="${#authentication.name}"></span>
+                <form th:action="@{/logout}" method="post" class="d-inline">
+                    <button class="btn btn-outline-danger" type="submit">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <form class="row g-3 mb-3" th:action="@{/admin/discounts}" method="get">
+            <div class="col-md-4">
+                <input class="form-control" name="search" placeholder="Tìm theo mã, mô tả..."
+                       th:value="${param.search}">
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select">
+                    <option value="">Tất cả loại</option>
+                    <option value="PERCENTAGE" th:selected="${param.type == 'PERCENTAGE'}">Giảm theo %</option>
+                    <option value="FIXED_AMOUNT" th:selected="${param.type == 'FIXED_AMOUNT'}">Giảm cố định</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active" th:selected="${param.status == 'active'}">Hoạt động</option>
+                    <option value="expired" th:selected="${param.status == 'expired'}">Đã hết hạn</option>
+                    <option value="inactive" th:selected="${param.status == 'inactive'}">Không hoạt động</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" type="submit">
+                    <i class="fas fa-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
+
+        <!-- Thêm mới -->
+        <div class="mb-3 text-end">
+            <a class="btn btn-success" th:href="@{/admin/discounts/create}">
+                <i class="fas fa-plus"></i> Thêm mã giảm giá
+            </a>
+        </div>
+
+        <!-- Danh sách -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle bg-white">
+                <thead class="table-light text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Mã</th>
+                    <th>Mô tả</th>
+                    <th>Loại</th>
+                    <th>Giá trị</th>
+                    <th>Đơn tối thiểu</th>
+                    <th>Giảm tối đa</th>
+                    <th>Thời gian</th>
+                    <th>Giới hạn</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="coupon : ${coupons}" class="text-center">
+                    <td th:text="${coupon.id}"></td>
+                    <td><span class="badge bg-secondary" th:text="${coupon.code}"></span></td>
+                    <td th:text="${coupon.description}"></td>
+                    <td>
+                        <span th:if="${coupon.discountType == 'PERCENTAGE'}" class="badge bg-info">Giảm theo %</span>
+                        <span th:if="${coupon.discountType != 'PERCENTAGE'}" class="badge bg-warning">Giảm cố định</span>
+                    </td>
+                    <td>
+                        <span th:if="${coupon.discountType == 'PERCENTAGE'}" th:text="${coupon.discountValue + '%'}"></span>
+                        <span th:if="${coupon.discountType != 'PERCENTAGE'}" th:text="${#numbers.formatDecimal(coupon.discountValue, 0, 0) + ' VNĐ'}"></span>
+                    </td>
+                    <td th:text="${#numbers.formatDecimal(coupon.minPurchase, 0, 0) + ' VNĐ'}"></td>
+                    <td th:text="${coupon.maxDiscount != null ? #numbers.formatDecimal(coupon.maxDiscount, 0, 0) + ' VNĐ' : '-'}"></td>
+                    <td>
+                        <small th:text="${#dates.format(coupon.startDate, 'dd/MM/yyyy')} + ' - ' + ${#dates.format(coupon.endDate, 'dd/MM/yyyy')}"></small>
+                    </td>
+                    <td th:text="${coupon.usageLimit != null ? coupon.usageLimit : '-'}"></td>
+                    <td>
+                        <span th:if="${coupon.isActive}" class="badge bg-success">Hoạt động</span>
+                        <span th:if="${!coupon.isActive}" class="badge bg-secondary">Không hoạt động</span>
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-primary" th:href="@{'/admin/discounts/edit/' + ${coupon.id}}">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a class="btn btn-sm btn-danger" th:href="@{'/admin/discounts/delete/' + ${coupon.id}}"
+                           onclick="return confirm('Bạn có chắc chắn muốn xóa?');">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${coupons.totalPages > 1}" class="mt-3">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${coupons.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/discounts(page=${coupons.number - 1})}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, coupons.totalPages - 1)}"
+                    th:classappend="${i == coupons.number} ? 'active'">
+                    <a class="page-link" th:href="@{/admin/discounts(page=${i})}" th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${coupons.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/coupons(page=${coupons.number + 1})}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/script_admin_discounts.js}"></script>
+</body>
+</html>

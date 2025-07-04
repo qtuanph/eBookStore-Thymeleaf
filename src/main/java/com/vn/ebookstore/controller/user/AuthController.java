@@ -91,7 +91,7 @@ public class AuthController {
             user.setLastName(lastName);
             user.setUsername(username);
             user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(password));
+            user.setPassword(password);
             user.setPhoneNumber(phoneNumber);
 
             // Parse ngày sinh
@@ -106,8 +106,10 @@ public class AuthController {
 
             // Xử lý upload ảnh
             if (!avatar.isEmpty()) {
-                String uploadDir = "src/main/resources/static/image/avatar";
+                String uploadDir = "E:/suasang/eBookStore-Thymeleaf/uploads/avatar";;
                 
+                
+
                 // Xử lý xóa avatar cũ nếu có
                 if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
                     try {
@@ -135,7 +137,7 @@ public class AuthController {
                 Files.copy(avatar.getInputStream(), filePath);
 
                 // Cập nhật đường dẫn avatar mới
-                user.setAvatar("/image/avatar/" + filename);
+                user.setAvatar(filename);
             }
 
             // Tạo đối tượng Address và thiết lập thông tin

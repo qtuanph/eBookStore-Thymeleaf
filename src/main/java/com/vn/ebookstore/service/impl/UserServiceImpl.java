@@ -209,15 +209,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             user.setUsername(user.getUsername() != null ? user.getUsername() : user.getEmail());
             user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-            // Set default ROLE_CUSTOMER role 
-            Role customerRole = roleRepository.findByName("ROLE_CUSTOMER")
-                .orElseGet(() -> {
-                    Role newRole = new Role();
-                    newRole.setName("ROLE_CUSTOMER");
-                    newRole.setDescription("Regular customer role");
-                    newRole.setCreatedAt(new Date());
-                    return roleRepository.save(newRole);
-                });
+       Role customerRole = roleRepository.findByName("customer")
+        .orElseGet(() -> {
+            Role newRole = new Role();
+            newRole.setName("customer");
+            newRole.setDescription("Regular customer role");
+            newRole.setCreatedAt(new Date());
+            return roleRepository.save(newRole);
+        });
 
             user.setRoles(Arrays.asList(customerRole));
             

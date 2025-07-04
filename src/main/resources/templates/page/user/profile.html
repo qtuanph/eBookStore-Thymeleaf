@@ -54,12 +54,17 @@
                             <!-- Avatar -->
                             <div class="col-md-3 text-center mb-4">
                                 <div class="position-relative">
+                                     <!-- Nếu có avatar -->
                                     <img th:if="${#authentication.principal.avatar != null}"
-                                        th:src="${#authentication.principal.avatar}"
+                                        th:src="@{'/image/avatar/' + ${#authentication.principal.avatar}}"
                                         class="rounded-circle img-thumbnail"
-                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar">
-                                    <i th:unless="${#authentication.principal.avatar != null}"
-                                        class="fa-regular fa-user fa-6x"></i>
+                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
+
+                                    <!-- Nếu không có avatar -->
+                                    <img th:unless="${#authentication.principal.avatar != null}"
+                                        th:src="@{/image/avatar/default-avatar.jpg}"
+                                        class="rounded-circle img-thumbnail"
+                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Default Avatar" />
                                 </div>
                             </div>
                             <!-- User Details -->

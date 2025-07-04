@@ -9,4 +9,6 @@ public interface CategoryService {
     void deleteCategory(int id);
     Category getCategoryById(int id);
     List<Category> getAllCategories();
+    boolean hasBooksInCategory(Integer categoryId);
+
 }

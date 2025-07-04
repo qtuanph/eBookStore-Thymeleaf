@@ -1,6 +1,7 @@
 package com.vn.ebookstore.service.impl;
 
 import com.vn.ebookstore.model.Category;
+import com.vn.ebookstore.model.SubCategory;
 import com.vn.ebookstore.repository.CategoryRepository;
 import com.vn.ebookstore.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,4 +42,15 @@ public class CategoryServiceImpl implements CategoryService {
     public List<Category> getAllCategories() {
         return categoryRepository.findAllOrderById();
     }
+    @Override
+    public boolean hasBooksInCategory(Integer categoryId) {
+        Category category = getCategoryById(categoryId);
+        for (SubCategory sub : category.getSubCategories()) {
+            if (sub.getBooks() != null && !sub.getBooks().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

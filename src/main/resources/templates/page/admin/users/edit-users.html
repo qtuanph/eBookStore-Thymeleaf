@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chỉnh sửa người dùng</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            padding: 30px;
+        }
+
+        h1, h3 {
+            color: #333;
+        }
+
+        form {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        select[multiple] {
+            height: auto;
+            min-height: 100px;
+        }
+
+        .address-block {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>Chỉnh sửa người dùng</h1>
+
+
+<form th:action="@{'/admin/users/edit/' + ${user.id}}" enctype="multipart/form-data" th:object="${user}" method="post">
+   
+    <div th:if="${user.avatar != null}">
+        <p>Ảnh hiện tại:</p>
+        <img th:src="@{'/image/avatar/' + ${user.avatar}}" alt="Avatar" style="max-width: 150px; border-radius: 8px; margin-bottom: 10px;" />
+    </div>
+    <label for="avatarFile">Chọn ảnh đại diện mới:</label>
+    <input type="file" name="avatarFile" id="avatarFile" accept="image/*" />
+
+
+
+    <label for="firstName">First Name:</label>
+    <input type="text" th:field="*{firstName}" />
+
+    <label for="lastName">Last Name:</label>
+    <input type="text" th:field="*{lastName}" />
+
+    <label for="username">Username:</label>
+    <input type="text" th:field="*{username}" />
+
+    <label for="email">Email:</label>
+    <input type="email" th:field="*{email}" />
+
+    <label for="password">Password (bỏ trống nếu không đổi):</label>
+    <input type="password" th:field="*{password}" />
+
+    <label for="birthOfDate">Birth Date:</label>
+    <input type="date" th:field="*{birthOfDate}" />
+
+    <label for="phoneNumber">Phone Number:</label>
+    <input type="text" th:field="*{phoneNumber}" />
+
+  <label for="roles">Roles:</label>
+    <select multiple th:field="*{roles}">
+        <option th:each="role : ${allRoles}"
+                th:value="${role.id}"
+                th:text="${role.name}">
+        </option>
+    </select>
+
+    <h3>Địa chỉ</h3>
+    <div th:each="addr, iterStat : *{addresses}" class="address-block">
+        <input type="hidden" th:field="*{addresses[__${iterStat.index}__].id}" />
+
+        <label>Address Line:</label>
+        <input type="text" th:field="*{addresses[__${iterStat.index}__].addressLine}" />
+
+        <label>Ward:</label>
+        <input type="text" th:field="*{addresses[__${iterStat.index}__].ward}" />
+
+        <label>District:</label>
+        <input type="text" th:field="*{addresses[__${iterStat.index}__].district}" />
+
+        <label>City:</label>
+        <input type="text" th:field="*{addresses[__${iterStat.index}__].city}" />
+
+        <label>Country:</label>
+        <input type="text" th:field="*{addresses[__${iterStat.index}__].country}" />
+
+        <label>Postal Code:</label>
+        <input type="text" th:field="*{addresses[__${iterStat.index}__].postalCode}" />
+    </div>
+
+    <button type="submit">Lưu</button>
+</form>
+
+<a th:href="@{/admin/users}">← Quay lại danh sách</a>
+
+
+<script>
+    document.querySelector("form").addEventListener("submit", function(e) {
+        const addressInputs = document.querySelectorAll("input[name^='addresses']");
+        if (addressInputs.length === 0) {
+            const hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = "addresses";
+            hidden.value = "";
+            this.appendChild(hidden);
+        }
+    });
+</script>
+</body>
+</html>

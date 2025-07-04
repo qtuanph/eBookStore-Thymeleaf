@@ -1,6 +1,8 @@
 package com.vn.ebookstore.model;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -21,9 +23,9 @@ public class Category {
     @Column(name = "deleted_at")
     private Date deletedAt;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
-    private List<SubCategory> subCategories;
+    private List<SubCategory> subCategories= new ArrayList<>();
 
     public Integer getId() {
         return id;

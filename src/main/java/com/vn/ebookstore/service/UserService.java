@@ -1,8 +1,12 @@
 package com.vn.ebookstore.service;
 
-import com.vn.ebookstore.model.User;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.vn.ebookstore.model.User;
 
 public interface UserService {
     User createUser(User user);
@@ -22,4 +26,12 @@ public interface UserService {
     User getUserByEmail(String email);
     boolean existsByUsername(String username);
     long getTotalUsers();
+    Page<User> getAllUsersPage(Pageable pageable);
+    Page<User> searchUsers(String keyword, Pageable pageable);
+    Page<User> findByRole(String role, Pageable pageable);
+    
+    // Thêm phương thức mới cho roles
+    User updateUserRoles(int userId, List<Integer> roleIds);
+    User addRolesToUser(int userId, List<Integer> roleIds);
+    User removeRolesFromUser(int userId, List<Integer> roleIds);
 }

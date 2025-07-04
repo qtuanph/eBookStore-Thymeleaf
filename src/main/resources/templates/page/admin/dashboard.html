@@ -13,49 +13,7 @@
 <body>
     <div class="wrapper">
         <!-- Sidebar -->
-        <nav id="sidebar">
-            <div class="sidebar-header">
-                <h3>Admin Panel</h3>
-            </div>
-
-            <ul class="list-unstyled components">
-                <li class="active">
-                    <a th:href="@{/admin/dashboard}">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/books}">
-                        <i class="fas fa-book"></i> Quản lý sách
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/categories}">
-                        <i class="fas fa-list"></i> Quản lý danh mục
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/orders}">
-                        <i class="fas fa-shopping-cart"></i> Quản lý đơn hàng
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/users}">
-                        <i class="fas fa-users"></i> Quản lý người dùng
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/coupons}">
-                        <i class="fas fa-tag"></i> Mã giảm giá
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/reviews}">
-                        <i class="fas fa-star"></i> Đánh giá
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <div th:replace="~{fragments/admin_sidebar :: sidebar}"></div>
 
         <!-- Page Content -->
         <div id="content">

@@ -4,8 +4,8 @@ USE ebookstore;
 -- 1. BẢNG USERS
 ------------------------------------------------
 INSERT INTO users (avatar, first_name, last_name, username, email, password, birth_of_date, phone_number) VALUES
-('avatar_admin.png', 'Quản trị', 'Hệ thống', 'admin', 'admin@example.com', 'admin', '1980-01-01', '0123456789'),
-('avatar_customer.png', 'Khách', 'Hàng', 'customer', 'customer@example.com', 'customer', '1990-05-05', '0987654321');
+('avatar_admin.png', 'Quản trị', 'Hệ thống', 'admin', 'admin@example.com', '$2a$12$ARKga2.yt8CtkQSTi5uDR.cR2tYQBNdym4Gx/p.zecNqhRB.vjWhe', '1980-01-01', '0123456789'),
+('avatar_customer.png', 'Khách', 'Hàng', 'customer', 'customer@example.com', '$2a$12$ARKga2.yt8CtkQSTi5uDR.cR2tYQBNdym4Gx/p.zecNqhRB.vjWhe', '1990-05-05', '0987654321');
 
 ------------------------------------------------
 -- 2. BẢNG ADDRESSES

@@ -1,12 +1,13 @@
 package com.vn.ebookstore.service.impl;
 
-import com.vn.ebookstore.model.Role;
-import com.vn.ebookstore.repository.RoleRepository;
-import com.vn.ebookstore.service.RoleService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.vn.ebookstore.model.Role;
+import com.vn.ebookstore.repository.RoleRepository;
+import com.vn.ebookstore.service.RoleService;
 
 @Service
 public class RoleServiceImpl implements RoleService {
@@ -40,5 +41,15 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
+    }
+
+    @Override
+    public Role getRoleByName(String name) {
+        return roleRepository.findByName(name).orElseThrow(() -> new RuntimeException("Role not found"));
+    }
+
+    @Override
+    public List<Role> getRolesByIds(List<Integer> ids) {
+        return roleRepository.findAllById(ids);
     }
 }

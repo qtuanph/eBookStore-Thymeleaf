@@ -1,47 +1,65 @@
-package com.vn.ebookstore.controller;
+package com.vn.ebookstore.controller.user;
 
-import com.vn.ebookstore.model.*;
-import com.vn.ebookstore.service.BookService;
-import com.vn.ebookstore.service.CategoryService;
-import com.vn.ebookstore.service.UserService;
-import com.vn.ebookstore.service.WishlistService;
-import com.vn.ebookstore.service.CartService;
-import com.vn.ebookstore.service.ReviewService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.io.IOException;
 import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.vn.ebookstore.model.Address;
+import com.vn.ebookstore.model.Book;
+import com.vn.ebookstore.model.Cart;
+import com.vn.ebookstore.model.Category;
+import com.vn.ebookstore.model.OrderDetail;
+import com.vn.ebookstore.model.PaymentDetail;
+import com.vn.ebookstore.model.Review;
+import com.vn.ebookstore.model.User;
+import com.vn.ebookstore.model.Wishlist;
 import com.vn.ebookstore.security.UserDetailsImpl;
 import com.vn.ebookstore.service.AddressService;
+import com.vn.ebookstore.service.BookService;
+import com.vn.ebookstore.service.CartService;
+import com.vn.ebookstore.service.CategoryService;
 import com.vn.ebookstore.service.OrderDetailService;
 import com.vn.ebookstore.service.PaymentDetailService;
+import com.vn.ebookstore.service.ReviewService;
+import com.vn.ebookstore.service.UserService;
+import com.vn.ebookstore.service.WishlistService;
 
 @Controller
 @RequestMapping("/user")
@@ -178,10 +196,10 @@ public class UserController {
         Double maxPriceDouble = null;
         try {
             if (minPrice != null && !minPrice.trim().isEmpty()) {
-                minPriceDouble = Double.parseDouble(minPrice.replace(",", ""));
+                minPriceDouble = Double.valueOf(minPrice.replace(",", ""));
             }
             if (maxPrice != null && !maxPrice.trim().isEmpty()) {
-                maxPriceDouble = Double.parseDouble(maxPrice.replace(",", ""));
+                maxPriceDouble = Double.valueOf(maxPrice.replace(",", ""));
             }
         } catch (NumberFormatException e) {
             // Log lỗi và dùng giá trị mặc định
@@ -434,10 +452,22 @@ public class UserController {
             Principal principal,
             RedirectAttributes redirectAttributes) {
         try {
+            if (principal == null) {
+                redirectAttributes.addFlashAttribute("error", "Vui lòng đăng nhập để đánh giá");
+                return "redirect:/login";
+            }
+
             User user = userService.getUserByEmail(principal.getName());
             
+            // Kiểm tra xem người dùng đã đánh giá chưa
             if (reviewService.hasUserReviewedBook(user.getId(), bookId)) {
                 redirectAttributes.addFlashAttribute("error", "Bạn đã đánh giá cuốn sách này rồi");
+                return "redirect:/user/book/" + bookId;
+            }
+
+            // Validate rating
+            if (rating < 1 || rating > 5) {
+                redirectAttributes.addFlashAttribute("error", "Đánh giá không hợp lệ");
                 return "redirect:/user/book/" + bookId;
             }
 
@@ -452,9 +482,15 @@ public class UserController {
             review.setCreatedAt(new Date());
             
             reviewService.saveReview(review);
+            
+            // Cập nhật average rating cho sách
+            book.updateAverageRating();
+            bookService.save(book);
+            
             redirectAttributes.addFlashAttribute("success", "Đã thêm đánh giá thành công");
+            
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Lỗi khi thêm đánh giá: " + e.getMessage());
         }
         return "redirect:/user/book/" + bookId;
     }
@@ -472,7 +508,7 @@ public class UserController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá"));
             
             // Kiểm tra quyền sở hữu review
-            if (review.getUser().getId() != user.getId()) {
+            if (!Objects.equals(review.getUser().getId(), user.getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Không có quyền sửa đánh giá này"));
             }
 
@@ -507,7 +543,7 @@ public class UserController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá"));
             
             // Kiểm tra quyền sở hữu review
-            if (review.getUser().getId() != user.getId()) {
+            if (!Objects.equals(review.getUser().getId(), user.getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Không có quyền xóa đánh giá này"));
             }
             
@@ -700,7 +736,10 @@ public class UserController {
                 }
 
                 String originalFilename = avatar.getOriginalFilename();
-                String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                String extension = "";
+                if (originalFilename != null && originalFilename.lastIndexOf(".") != -1) {
+                    extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                }
                 String filename = UUID.randomUUID().toString() + extension;
 
                 Path filePath = uploadPath.resolve(filename);
@@ -745,7 +784,7 @@ public class UserController {
 
             redirectAttributes.addFlashAttribute("success", "Thông tin cá nhân đã được cập nhật");
             
-        } catch (Exception e) {
+        } catch (IOException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
             return "redirect:/user/profile"; // Return to profile page on error
         }
@@ -789,7 +828,7 @@ public class UserController {
 
             // Kiểm tra địa chỉ
             Address shippingAddress = addressService.getAddressById(addressId);
-            if (shippingAddress == null || shippingAddress.getUser().getId() != user.getId()) {
+            if (shippingAddress == null || !Objects.equals(shippingAddress.getUser().getId(), user.getId())) {
                 redirectAttributes.addFlashAttribute("error", "Địa chỉ không hợp lệ!");
                 return "redirect:/user/purchase";
             }
@@ -812,7 +851,7 @@ public class UserController {
             } else {
                 throw new RuntimeException("Không thể tạo đơn hàng!");
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
             return "redirect:/user/purchase";
         }
@@ -847,7 +886,7 @@ public class UserController {
                     .body(Map.of("error", "Không tìm thấy đơn hàng!"));
             }
             
-            if (order.getUser().getId() != user.getId()) {
+            if (!Objects.equals(order.getUser().getId(), user.getId())) {
                 return ResponseEntity.status(403)
                     .body(Map.of("error", "Không có quyền hủy đơn hàng này"));
             }
@@ -879,14 +918,14 @@ public class UserController {
                     .body(Map.of("error", "Không tìm thấy đơn hàng!"));
             }
             
-            if (order.getUser().getId() != user.getId()) {
+            if (!Objects.equals(order.getUser().getId(), user.getId())) {
                 return ResponseEntity.status(403)
                     .body(Map.of("error", "Không có quyền thanh toán đơn hàng này"));
             }
 
             // Giả lập thanh toán thành công
             PaymentDetail payment = order.getPayments().get(0);
-            payment = paymentDetailService.updatePaymentStatus(payment.getId(), "SUCCESS");
+            paymentDetailService.updatePaymentStatus(payment.getId(), "SUCCESS");
             
             return ResponseEntity.ok()
                 .body(Map.of("message", "Thanh toán thành công"));

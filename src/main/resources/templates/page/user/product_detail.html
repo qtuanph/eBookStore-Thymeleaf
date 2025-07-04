@@ -1,317 +1,259 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-    xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
-
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${book != null ? book.title + ' - Hanoi Aptech BookStore' : 'Chi tiết sách'}">Chi tiết sách</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <title>Chi tiết sách</title>
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/index_style.css}">
-    <link rel="stylesheet" th:href="@{/css/product_detail_style.css}">
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-        crossorigin="anonymous"></script>
+    
+    <style>
+        .book-gallery {
+            margin-bottom: 2rem;
+        }
+        
+        .book-gallery img {
+            max-width: 100%;
+            height: auto;
+            max-height: 400px; /* Giới hạn chiều cao tối đa */
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .book-info {
+            padding: 20px;
+        }
+
+        .book-price {
+            font-size: 24px;
+            color: #2563eb;
+            font-weight: 600;
+            margin: 15px 0;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        /* Rating stars style */
+        .rating-stars {
+            color: #fbbf24;
+            font-size: 20px;
+        }
+
+        /* Review section styles */
+        .review-section {
+            margin-top: 40px;
+        }
+
+        .review-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .review-list .review-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 30px;
+            color: #ddd;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+
+        .star-rating input:checked ~ label {
+            color: #ffd700;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #ffd700;
+        }
+    </style>
 </head>
-
-<body class="bg-light">
-    <th:block th:replace="~{index :: header}"></th:block>
-
-    <div class="container py-5">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
-            <ol class="breadcrumb">
-                <!-- Trang chủ -->
-                <li class="breadcrumb-item">
-                    <a sec:authorize="isAuthenticated()" th:href="@{/user/home}" class="text-decoration-none">Trang chủ</a>
-                    <a sec:authorize="!isAuthenticated()" th:href="@{/}" class="text-decoration-none">Trang chủ</a>
-                </li>
-                
-                <!-- Sách -->
-                <li class="breadcrumb-item">
-                    <a sec:authorize="isAuthenticated()" th:href="@{/user/products}" class="text-decoration-none">Sách</a>
-                    <a sec:authorize="!isAuthenticated()" th:href="@{/products}" class="text-decoration-none">Sách</a>
-                </li>
-                
-                <!-- Category Name (Danh mục cha) -->
-                <li class="breadcrumb-item" th:if="${book != null and book.subCategory != null}">
-                    <a sec:authorize="isAuthenticated()" 
-                       th:href="@{/user/category/{id}(id=${book.subCategory.category.id})}"
-                       th:text="${book.subCategory.category.name}"
-                       class="text-decoration-none">Danh mục cha</a>
-                    <a sec:authorize="!isAuthenticated()" 
-                       th:href="@{/category/{id}(id=${book.subCategory.category.id})}"
-                       th:text="${book.subCategory.category.name}"
-                       class="text-decoration-none">Danh mục cha</a>
-                </li>
-                
-                <!-- Subcategory Name (Danh mục con) -->
-                <li class="breadcrumb-item" th:if="${book != null and book.subCategory != null}">
-                    <a sec:authorize="isAuthenticated()" 
-                       th:href="@{/user/subcategory/{id}(id=${book.subCategory.id})}"
-                       th:text="${book.subCategory.name}"
-                       class="text-decoration-none">Danh mục con</a>
-                    <a sec:authorize="!isAuthenticated()" 
-                       th:href="@{/subcategory/{id}(id=${book.subCategory.id})}"
-                       th:text="${book.subCategory.name}"
-                       class="text-decoration-none">Danh mục con</a>
-                </li>
-                
-                <!-- Tên sách -->
-                <li class="breadcrumb-item active" aria-current="page" 
-                    th:text="${book != null ? book.title : ''}">Tên sách</li>
-            </ol>
-        </nav>
-
-        <div class="row g-4">
-            <!-- Hình ảnh sách -->
-            <div class="col-lg-5">
-                <div class="position-sticky" style="top: 2rem;">
-                    <img th:if="${book != null and book.cover != null}" 
-                         th:src="${book.cover}" 
-                         class="book-cover w-100 mb-3" 
-                         th:alt="${book.title}">
-                    <img th:unless="${book != null and book.cover != null}" 
-                         th:src="@{/image/default-book-cover.png}" 
-                         class="book-cover w-100 mb-3" 
-                         alt="Default Cover">
-                    
-                    <!-- Thư viện ảnh -->
-                    <div class="d-flex gap-2 overflow-auto py-2" th:if="${book != null and book.images != null}">
-                        <img th:each="bookImage : ${book.images}" 
-                             th:src="${bookImage.imagePath}" 
-                             class="book-images"
-                             th:onclick="'changeMainImage(this, \'' + ${bookImage.imagePath} + '\')'">
-                    </div>
+<body>
+    <!-- Header -->
+    <div th:replace="~{index :: header}"></div>
+    
+    <!-- Main content -->
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Book Image Gallery -->
+            <div class="col-md-5">
+                <div class="book-gallery">
+                    <img th:if="${book != null && book.cover != null}" 
+                         th:src="@{'/image/cover/' + ${book.cover}}"
+                         alt="Book Cover"
+                         class="img-fluid">
+                    <img th:if="${book == null || book.cover == null}"
+                         th:src="@{/image/cover/default.jpg}"
+                         alt="Default Cover"
+                         class="img-fluid">
                 </div>
             </div>
 
-            <!-- Thông tin sách -->
-            <div class="col-lg-7">
-                <div class="book-detail-card p-4">
-                    <!-- Tiêu đề và tác giả -->
-                    <div class="mb-4">
-                        <h1 class="book-title mb-2" th:text="${book != null ? book.title : ''}">Tên sách</h1>
-                        <p class="book-author mb-2" th:if="${book != null}" th:text="'Tác giả: ' + ${book.author}">Tác giả</p>
-                        
-                        <div class="mb-3">
-                            <!-- Danh mục con -->
-                            <a th:if="${book != null and book.subCategory != null}" 
-                               sec:authorize="isAuthenticated()"
-                               th:href="@{/user/subcategory/{id}(id=${book.subCategory.id})}"
-                               class="category-badge me-2" 
-                               th:text="${book.subCategory.name}">Danh mục con</a>
-                            <a th:if="${book != null and book.subCategory != null}" 
-                               sec:authorize="!isAuthenticated()"
-                               th:href="@{/subcategory/{id}(id=${book.subCategory.id})}"
-                               class="category-badge me-2" 
-                               th:text="${book.subCategory.name}">Danh mục con</a>
-                            
-                            <!-- Danh mục cha -->
-                            <a th:if="${book != null and book.subCategory != null}" 
-                               sec:authorize="isAuthenticated()"
-                               th:href="@{/user/category/{id}(id=${book.subCategory.category.id})}"
-                               class="category-badge" 
-                               th:text="${book.subCategory.category.name}">Danh mục cha</a>
-                            <a th:if="${book != null and book.subCategory != null}" 
-                               sec:authorize="!isAuthenticated()"
-                               th:href="@{/category/{id}(id=${book.subCategory.category.id})}"
-                               class="category-badge" 
-                               th:text="${book.subCategory.category.name}">Danh mục cha</a>
-                        </div>
+            <!-- Book Info -->
+            <div class="col-md-7">
+                <div class="book-info">
+                    <h2 th:text="${book.title}">Book Title</h2>
+                    <p>Tác giả: <span th:text="${book.author}">Author Name</span></p>
+                    
+                    <!-- Hiển thị đánh giá trung bình -->
+                    <div class="rating-stars" th:if="${book.averageRating != null}">
+                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                           th:class="${i <= book.averageRating ? 'fas' : 'far'} + ' fa-star'"></i>
+                        <span class="text-muted">
+                            (<span th:text="${#numbers.formatDecimal(book.averageRating, 1, 1)}">0.0</span>/5 -
+                            <span th:text="${book.reviews != null ? book.reviews.size() : 0}">0</span> đánh giá)
+                        </span>
                     </div>
 
-                        <!-- Đánh giá -->
-                        <div class="d-flex align-items-center mb-3" th:if="${book != null}">
-                            <div class="rating-stars me-2">
-                                <th:block th:with="rating=${book.averageRating}">
-                                    <i th:each="i : ${#numbers.sequence(1, 5)}"
-                                       th:class="${i <= rating ? 'fas' : (i <= rating + 0.5 ? 'fas' : 'far')} + ' fa-star'"></i>
-                                </th:block>
-                            </div>
-                            <span class="text-muted">
-                                <span th:text="${book.averageRating}">4.5</span>/5 
-                                (<span th:text="${book.reviewCount}">10</span> đánh giá)
-                            </span>
-                        </div>
+                    <div class="book-price">
+                        <span th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span>
+                    </div>
 
-                        <!-- Giá và thêm vào giỏ -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <span class="book-price" th:if="${book != null}" 
-                                  th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
-                                100,000 VNĐ
-                            </span>
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="input-group" style="width: 150px;">
-                                    <button class="btn btn-outline-secondary btn-quantity" type="button" onclick="decrementQuantity()">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <input type="number" class="form-control quantity-input" id="quantity" value="1" min="1">
-                                    <button class="btn btn-outline-secondary btn-quantity" type="button" onclick="incrementQuantity()">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                                <button th:if="${book != null}" class="btn btn-primary" onclick="addToCartWithQuantity()">
-                                    <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Yêu thích -->
-                        <button sec:authorize="isAuthenticated()" 
-                                th:if="${book != null}" 
-                                class="btn btn-outline-danger mb-4 w-100" 
-                                th:onclick="'toggleWishlist(' + ${book.id} + ')'">
-                            <i class="far fa-heart" 
-                               th:class="${wishlists != null and #lists.contains(wishlists.![book.id], book.id)} ? 'fas fa-heart' : 'far fa-heart'">
-                            </i>
-                            <span th:text="${wishlists != null and #lists.contains(wishlists.![book.id], book.id)} ? 'Đã yêu thích' : 'Thêm vào yêu thích'">
-                                Thêm vào yêu thích
-                            </span>
+                    <div class="book-actions">
+                        <button class="btn btn-primary" th:onclick="'addToCart(' + ${book.id} + ', 1)'">
+                            <i class="fas fa-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                        <button class="btn btn-outline-danger" th:onclick="'toggleWishlist(' + ${book.id} + ')'">
+                            <i class="far fa-heart" th:class="${wishlists != null and #lists.contains(wishlists.![book.id], book.id)} ? 'fas fa-heart' : 'far fa-heart'"></i>
+                            Yêu thích
                         </button>
                     </div>
 
-                    <!-- Thông tin chi tiết -->
-                    <div class="mb-4" th:if="${book != null and book.bookDetail != null}">
-                        <h5 class="mb-3">Thông tin chi tiết</h5>
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <p class="mb-2">
-                                    <span class="detail-label">ISBN:</span>
-                                    <span class="detail-value" th:text="${book.bookDetail.isbn}">978-3-16-148410-0</span>
-                                </p>
-                            </div>
-                            <div class="col-6">
-                                <p class="mb-2">
-                                    <span class="detail-label">Nhà xuất bản:</span>
-                                    <span class="detail-value" th:text="${book.bookDetail.publisher}">NXB Kim Đồng</span>
-                                </p>
-                            </div>
-                            <div class="col-6">
-                                <p class="mb-2">
-                                    <span class="detail-label">Ngày xuất bản:</span>
-                                    <span class="detail-value" 
-                                          th:text="${#dates.format(book.bookDetail.publicationDate, 'dd/MM/yyyy')}">
-                                        01/01/2024
-                                    </span>
-                                </p>
-                            </div>
-                            <div class="col-6">
-                                <p class="mb-2">
-                                    <span class="detail-label">Số trang:</span>
-                                    <span class="detail-value" th:text="${book.bookDetail.pages}">300</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Book Details -->
+                    <div th:if="${book.bookDetail != null}" class="book-details mt-4">
+                        <h4>Thông tin chi tiết</h4>
+                        <table class="table">
+                            <tr th:if="${book.bookDetail.isbn != null}">
+                                <td>ISBN:</td>
+                                <td th:text="${book.bookDetail.isbn}"></td>
+                            </tr>
+                            <tr th:if="${book.bookDetail.publisher != null}">
+                                <td>Nhà xuất bản:</td>
+                                <td th:text="${book.bookDetail.publisher}"></td>
+                            </tr>
+                            <tr th:if="${book.bookDetail.publicationDate != null}">
+                                <td>Ngày xuất bản:</td>
+                                <td th:text="${#temporals.format(book.bookDetail.publicationDate, 'dd/MM/yyyy')}"></td>
+                            </tr>
+                            <tr th:if="${book.bookDetail.pages != null}">
+                                <td>Số trang:</td>
+                                <td th:text="${book.bookDetail.pages}"></td>
+                            </tr>
+                        </table>
 
-                    <!-- Mô tả -->
-                    <div class="mb-4" th:if="${book != null and book.bookDetail != null}">
-                        <h5 class="mb-3">Mô tả</h5>
-                        <div class="description-text" th:text="${book.bookDetail.description}">
-                            Mô tả sách...
-                        </div>
-                    </div>
-
-                    <!-- Tóm tắt -->
-                    <div class="mb-4" th:if="${book != null and book.bookDetail != null and book.bookDetail.summary != null}">
-                        <h5 class="mb-3">Tóm tắt</h5>
-                        <div class="description-text" th:text="${book.bookDetail.summary}">
-                            Tóm tắt sách...
+                        <div th:if="${book.bookDetail.description != null}" class="mt-4">
+                            <h4>Mô tả</h4>
+                            <p th:text="${book.bookDetail.description}"></p>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Đánh giá -->
-                <div class="book-detail-card p-4 mt-4">
-                    <h5 class="mb-4">Đánh giá từ độc giả</h5>
+        <!-- Reviews Section -->
+        <div class="reviews-section">
+            <h3>Đánh giá sản phẩm</h3>
+            
+            <!-- Show review form only if user hasn't reviewed -->
+            <div th:if="${#authentication.name != null and !#lists.contains(book.reviews.![user.email], #authentication.name)}">
+                <form th:action="@{/user/review/add}" method="post" class="review-form">
+                    <input type="hidden" name="bookId" th:value="${book.id}">
                     
-                    <!-- Form đánh giá mới -->
-                    <div class="mb-4" sec:authorize="isAuthenticated()">
-                        <form th:action="@{/user/review/add}" method="post">
-                            <input type="hidden" name="bookId" th:value="${book.id}">
-                            <div class="mb-3">
-                                <label class="form-label">Đánh giá của bạn:</label>
-                                <div class="rating-input mb-2">
-                                    <i class="far fa-star rating-star" data-rating="1"></i>
-                                    <i class="far fa-star rating-star" data-rating="2"></i>
-                                    <i class="far fa-star rating-star" data-rating="3"></i>
-                                    <i class="far fa-star rating-star" data-rating="4"></i>
-                                    <i class="far fa-star rating-star" data-rating="5"></i>
-                                </div>
-                                <input type="hidden" name="rating" id="ratingInput" required>
+                    <!-- Star rating system -->
+                    <div class="star-rating mb-3">
+                        <input type="radio" id="star5" name="rating" value="5" required>
+                        <label for="star5" title="5 sao">★</label>
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4" title="4 sao">★</label>
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3" title="3 sao">★</label>
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2" title="2 sao">★</label>
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1" title="1 sao">★</label>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <textarea name="comment" class="form-control" rows="3" 
+                                 placeholder="Nhập nhận xét của bạn..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                </form>
+            </div>
+
+            <!-- Reviews List -->
+            <div class="reviews-list">
+                <div th:each="review : ${book.reviews}" class="review-item mb-4 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong th:text="${review.user.firstName + ' ' + review.user.lastName}">User Name</strong>
+                            <div class="rating-stars">
+                                <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                   th:class="${i <= review.rating ? 'fas' : 'far'} + ' fa-star'"
+                                   style="color: #ffd700;"></i>
                             </div>
-                            <div class="mb-3">
-                                <label for="reviewComment" class="form-label">Nhận xét:</label>
-                                <textarea class="form-control" id="reviewComment" name="comment" rows="3" required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
-                        </form>
-                    </div>
-
-                    <!-- Thêm alert messages -->
-                    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-                        <span th:text="${success}">Success message</span>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-
-                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <span th:text="${error}">Error message</span>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-
-                    <div class="alert alert-info" sec:authorize="!isAuthenticated()">
-                        Vui lòng <a th:href="@{/login}" class="alert-link">đăng nhập</a> để gửi đánh giá
-                    </div>
-
-                    <!-- Existing review display code -->
-                    <div th:if="${book != null and book.reviews != null and not #lists.isEmpty(book.reviews)}">
-                        <div class="review-card p-3 mb-3" th:each="review : ${book.reviews}" th:id="'review-' + ${review.id}">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div>
-                                    <span class="review-author" th:text="${review.user.lastName}">Người dùng</span>
-                                    <div class="rating-stars d-inline-block ms-2">
-                                        <i th:each="i : ${#numbers.sequence(1, 5)}"
-                                           th:class="${i <= review.rating ? 'fas' : 'far'} + ' fa-star'"></i>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="review-date" th:text="${#dates.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">
-                                        01/01/2024
-                                    </span>
-                                    <!-- Thêm nút sửa/xóa chỉ hiển thị với chủ review -->
-                                    <div class="btn-group" th:if="${#authentication.name == review.user.email}">
-                                        <button class="btn btn-sm btn-outline-primary" 
-                                                th:onclick="'editReview(' + ${review.id} + ')'">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" 
-                                                th:onclick="'deleteReview(' + ${review.id} + ')'">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mb-0" th:text="${review.comment}">Nội dung đánh giá...</p>
+                        </div>
+                        <div th:if="${#authentication.name == review.user.email}">
+                            <button class="btn btn-sm btn-outline-primary me-2" 
+                                    th:data-review-id="${review.id}"
+                                    th:data-rating="${review.rating}"
+                                    th:data-comment="${review.comment}"
+                                    onclick="editReview(this.getAttribute('data-review-id'), 
+                                                     this.getAttribute('data-rating'), 
+                                                     this.getAttribute('data-comment'))">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    th:data-review-id="${review.id}"
+                                    onclick="deleteReview(this.getAttribute('data-review-id'))">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
-                    <div th:if="${book == null or book.reviews == null or #lists.isEmpty(book.reviews)}"
-                         class="text-center py-4 text-muted">
-                        <i class="fas fa-comments fa-2x mb-3"></i>
-                        <p class="mb-0">Chưa có đánh giá nào cho sách này</p>
-                    </div>
+                    <p class="mt-2" th:text="${review.comment}">Review comment</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <th:block th:replace="~{index :: footer}"></th:block>
+    <!-- Footer -->
+    <div th:replace="~{index :: footer}"></div>
 
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         function incrementQuantity() {
@@ -397,86 +339,87 @@
             });
         });
 
-        function editReview(reviewId) {
-            const reviewCard = document.getElementById('review-' + reviewId);
-            const comment = reviewCard.querySelector('p').textContent;
-            const rating = reviewCard.querySelectorAll('.fa-star.fas').length;
-            
+        function prepareEditReview(reviewId, rating, comment) {
             document.getElementById('editReviewId').value = reviewId;
+            document.querySelector(`input[name="editRating"][value="${rating}"]`).checked = true;
             document.getElementById('editReviewComment').value = comment;
-            document.getElementById('editRatingInput').value = rating;
-            setEditRating(rating);
-            
-            new bootstrap.Modal(document.getElementById('editReviewModal')).show();
         }
 
-        function setEditRating(rating) {
-            document.getElementById('editRatingInput').value = rating;
-            const stars = document.querySelectorAll('.rating-star-edit');
-            stars.forEach((star, index) => {
-                if (index < rating) {
-                    star.classList.remove('far');
-                    star.classList.add('fas');
-                } else {
-                    star.classList.remove('fas');
-                    star.classList.add('far');
-                }
-            });
-        }
-
-        function updateReview() {
+        function submitEditReview() {
             const reviewId = document.getElementById('editReviewId').value;
-            const rating = document.getElementById('editRatingInput').value;
+            const rating = document.querySelector('input[name="editRating"]:checked').value;
             const comment = document.getElementById('editReviewComment').value;
-            
+
             fetch(`/user/review/update/${reviewId}`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: `rating=${rating}&comment=${encodeURIComponent(comment)}`
+                body: JSON.stringify({ rating, comment })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('editReviewModal')).hide();
                     location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi cập nhật đánh giá');
                 }
             })
-            .catch(error => alert('Có lỗi xảy ra'));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi cập nhật đánh giá');
+            });
         }
 
-        function deleteReview(reviewId) {
-            if (confirm('Bạn có chắc muốn xóa đánh giá này?')) {
-                fetch(`/user/review/delete/${reviewId}`, {
-                    method: 'DELETE'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        document.getElementById('review-' + reviewId).remove();
-                    } else {
-                        throw new Error('Có lỗi xảy ra');
-                    }
-                })
-                .catch(error => alert(error.message));
+        function confirmDeleteReview(reviewId) {
+            if (confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) {
+                deleteReview(reviewId);
             }
         }
 
-        // Thêm xử lý cho rating stars trong modal sửa
-        document.querySelectorAll('.rating-star-edit').forEach(star => {
-            star.addEventListener('click', () => {
-                const rating = star.dataset.rating;
-                document.getElementById('editRatingInput').value = rating;
-                setEditRating(rating);
+        function deleteReview(reviewId) {
+            fetch(`/user/review/delete/${reviewId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi xóa đánh giá');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                location.reload(); // Reload anyway since the delete might have succeeded
             });
-        });
+        }
+
+        function editReview(reviewId, rating, comment) {
+            document.getElementById('editReviewId').value = reviewId;
+            document.querySelector(`input[name="editRating"][value="${rating}"]`).checked = true;
+            document.getElementById('editReviewComment').value = comment;
+            
+            new bootstrap.Modal(document.getElementById('editReviewModal')).show();
+        }
     </script>
 
     <script th:src="@{/js/cart.js}"></script>
     <script th:src="@{/js/wishlist.js}"></script>
+    <script th:src="@{/js/search_book.js}"></script>
 
-    <!-- Thêm modal sửa review -->
+    <!-- Edit Review Modal -->
     <div class="modal fade" id="editReviewModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -487,35 +430,35 @@
                 <div class="modal-body">
                     <form id="editReviewForm">
                         <input type="hidden" id="editReviewId">
+                        
                         <div class="mb-3">
-                            <label class="form-label">Đánh giá:</label>
-                            <div class="rating-input mb-2">
-                                <i class="far fa-star rating-star-edit" data-rating="1" onclick="setEditRating(1)"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="2" onclick="setEditRating(2)"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="3" onclick="setEditRating(3)"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="4" onclick="setEditRating(4)"></i>
-                                <i class="far fa-star rating-star-edit" data-rating="5" onclick="setEditRating(5)"></i>
+                            <label>Đánh giá:</label>
+                            <div class="star-rating">
+                                <input type="radio" id="edit-star5" name="editRating" value="5">
+                                <label for="edit-star5">★</label>
+                                <input type="radio" id="edit-star4" name="editRating" value="4">
+                                <label for="edit-star4">★</label>
+                                <input type="radio" id="edit-star3" name="editRating" value="3">
+                                <label for="edit-star3">★</label>
+                                <input type="radio" id="edit-star2" name="editRating" value="2">
+                                <label for="edit-star2">★</label>
+                                <input type="radio" id="edit-star1" name="editRating" value="1">
+                                <label for="edit-star1">★</label>
                             </div>
-                            <input type="hidden" id="editRatingInput" required>
                         </div>
+
                         <div class="mb-3">
-                            <label for="editReviewComment" class="form-label">Nhận xét:</label>
-                            <textarea class="form-control" id="editReviewComment" rows="3" required></textarea>
+                            <label>Nhận xét:</label>
+                            <textarea id="editReviewComment" class="form-control" rows="3" required></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary" onclick="updateReview()">Cập nhật</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="submitEditReview()">Cập nhật</button>
                 </div>
             </div>
         </div>
     </div>
-    <script th:src="@{/js/cart.js}"></script>
-    <script th:src="@{/js/wishlist.js}"></script>
-    <script th:src="@{/js/search_book.js}"></script>
-
-    
 </body>
-
 </html>

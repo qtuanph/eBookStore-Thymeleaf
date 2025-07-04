@@ -3,9 +3,10 @@ package com.vn.ebookstore.model;
 import jakarta.persistence.*;
 import java.util.Date;
 
+
 @Entity
 @Table(name = "addresses")
-public class Address {
+public class Address{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -37,7 +38,7 @@ public class Address {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
+    
     public int getId() {
         return id;
     }

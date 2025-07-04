@@ -1,4 +1,4 @@
-package com.vn.ebookstore.controller;
+package com.vn.ebookstore.controller.user;
 
 import com.vn.ebookstore.model.Book;
 import com.vn.ebookstore.service.BookService;

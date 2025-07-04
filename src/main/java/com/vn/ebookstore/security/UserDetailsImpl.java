@@ -1,19 +1,20 @@
 package com.vn.ebookstore.security;
 
-import com.vn.ebookstore.model.User;
+import java.util.Collection;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
+import com.vn.ebookstore.model.User;
 
 public class UserDetailsImpl implements UserDetails {
-    private String email;
-    private String password;
-    private String firstName;
-    private String lastName;
-    private String phoneNumber;
-    private String avatar;
-    private Collection<? extends GrantedAuthority> authorities;
+    private final String email;
+    private final String password;
+    private final String firstName;
+    private final String lastName;
+    private final String phoneNumber;
+    private final String avatar;
+    private final Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImpl(User user, Collection<? extends GrantedAuthority> authorities) {
         this.email = user.getEmail();

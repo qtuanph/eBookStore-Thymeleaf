@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Quản lý sách</title>
+    <style>
+     table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        padding: 12px;
+        border: 1px solid #ccc;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    img.cover-image {
+        width: 60px;
+        height: 90px;
+        object-fit: contain;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        box-shadow: 0 0 4px rgba(0,0,0,0.05);
+    }
+</style>
+</head>
+<body>
+<h1>Danh sách sách</h1>
+<a th:href="@{/admin/books/add}">➕ Thêm sách mới</a>
+<a th:href="@{/admin/dashboard}">🔙 Quay lại</a>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Tiêu đề</th>
+        <th>Tác giả</th>
+        <th>Giá</th>
+        <th>Ảnh bìa</th>
+        <th>Mô tả</th>
+        <th>Tóm tắt</th>
+        <th>ISBN</th>
+        <th>Nhà xuất bản</th>
+        <th>Ngày xuất bản</th>
+        <th>Số trang</th>
+        <th>File PDF</th>
+        <th>Mã danh mục</th>
+        <th>Hành động</th>
+    </tr>
+    <tr th:each="book : ${books}">
+        <td th:text="${book.id}">1</td>
+        <td th:text="${book.title}">Tựa sách</td>
+        <td th:text="${book.author}">Tác giả</td>
+        <td th:text="${book.price}">99.000</td>
+        <td>
+            <img class="cover-image"
+            th:src="@{/image/book/{img}(img=${book.cover != null ? book.cover : 'default-book.jpg'})}"
+            alt="Ảnh bìa" />
+        </td>
+        <td th:text="${book.bookDetail != null ? book.bookDetail.description : ''}">Mô tả</td>
+        <td th:text="${book.bookDetail != null ? book.bookDetail.summary : ''}">Tóm tắt</td>
+        <td th:text="${book.bookDetail != null ? book.bookDetail.isbn : ''}">ISBN</td>
+        <td th:text="${book.bookDetail != null ? book.bookDetail.publisher : ''}">Nhà xuất bản</td>
+        <td th:text="${book.bookDetail != null && book.bookDetail.publicationDate != null ? #temporals.format(book.bookDetail.publicationDate, 'dd/MM/yyyy') : ''}">Ngày xuất bản</td>
+        <td th:text="${book.bookDetail != null ? book.bookDetail.pages : ''}">Số trang</td>
+        <td>
+             <a th:if="${book.bookDetail != null && book.bookDetail.fileUrl != null}" 
+                th:href="@{/file/book/{file}(file=${book.bookDetail.fileUrl})}" 
+                target="_blank" class="file-link">
+                📄 Tải PDF
+            </a>
+            <span th:if="${book.bookDetail == null || book.bookDetail.fileUrl == null}">Không có</span>
+        </td>
+        <td th:text="${book.subCategory != null ? book.subCategory.id : 'Chưa có'}"></td>
+         <td>
+            <a th:href="@{'/admin/books/edit/' + ${book.id}}">✏️ Sửa</a> |
+            <a th:href="@{'/admin/books/delete/' + ${book.id}}"
+               onclick="return confirm('Bạn có chắc chắn muốn xóa?')">❌ Xóa</a>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

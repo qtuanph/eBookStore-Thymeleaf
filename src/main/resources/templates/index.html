@@ -381,11 +381,17 @@
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <!-- Hiển thị avatar cho người dùng đã đăng nhập -->
                             <span sec:authorize="isAuthenticated()">
+                                <!-- Nếu có avatar -->
                                 <img th:if="${#authentication.principal.avatar != null}"
-                                    th:src="${#authentication.principal.avatar}" class="rounded-circle"
-                                    style="width: 32px; height: 32px; object-fit: cover;" alt="Avatar">
-                                <i th:unless="${#authentication.principal.avatar != null}"
-                                    class="fa-regular fa-user"></i>
+                                    th:src="@{'/image/avatar/' + ${#authentication.principal.avatar}}"
+                                    class="rounded-circle"
+                                    style="width: 32px; height: 32px; object-fit: cover;" alt="Avatar" />
+
+                                <!-- Nếu không có avatar -->
+                                <img th:unless="${#authentication.principal.avatar != null}"
+                                    th:src="@{/image/avatar/default-avatar.jpg}"
+                                    class="rounded-circle"
+                                    style="width: 32px; height: 32px; object-fit: cover;" alt="Default Avatar" />
                             </span>
                             <!-- Hiển thị icon mặc định cho người dùng chưa đăng nhập -->
                             <i sec:authorize="!isAuthenticated()" class="fa-regular fa-user"></i>
@@ -547,9 +553,11 @@
                 <div class="row g-4">
                     <div class="col-md-4" th:each="category : ${categories.subList(0, #lists.size(categories) <= 3 ? #lists.size(categories) : 3)}">
                         <div class="category-card">
-                            <img th:src="${category.image != null && !category.image.isEmpty()} ? ${category.image} : '/image/category/default-category.jpg'" 
-                                 alt="Category Image" 
-                                 class="card-img">
+                            <img th:src="${category.image != null and !category.image.isEmpty()} ? 
+                                  @{/image/category/{img}(img=${category.image})} : 
+                                  @{/image/category/default-category.jpg}" 
+                                alt="Category Image" 
+                                class="card-img" />
                             <div class="category-content">
                                 <h3 th:text="${category.name}">Category Name</h3>
                                 <a th:href="@{'/user/category/' + ${category.id}}" class="btn btn-outline-light">Xem thêm</a>
@@ -572,10 +580,9 @@
                         <div class="col">
                             <div class="product-card shadow-sm">
                                 <div class="position-relative">
-                                    <!-- Link for authenticated users -->
-                                    <a th:if="${book != null}" sec:authorize="isAuthenticated()"
-                                        th:href="@{'/user/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : defaultCoverUrl}" 
+                                    <a th:if="${book != null}" sec:authorize="isAuthenticated()" 
+                                       th:href="@{'/user/book/' + ${book.id}}">
+                                        <img th:src="@{${book != null and book.cover != null ? '/image/cover/' + book.cover : '/image/cover/default.jpg'}}"
                                              class="product-image w-100" 
                                              th:alt="${book != null ? book.title : 'Default Cover'}">
                                     </a>
@@ -674,9 +681,10 @@
                                     <!-- Link for authenticated users -->
                                     <a th:if="${book != null}" sec:authorize="isAuthenticated()"
                                         th:href="@{'/user/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : defaultCoverUrl}" 
-                                             class="product-image w-100" 
-                                             th:alt="${book != null ? book.title : 'Default Cover'}">
+                                       <img th:src="@{/image/book/{img}(img=${book.cover != null ? book.cover : 'default-book.jpg'})}"
+                                        class="product-image w-100"
+                                        th:alt="${book != null ? book.title : 'Default Cover'}">
+
                                     </a>
                                     <!-- Link for non-authenticated users -->
                                     <a th:if="${book != null}" sec:authorize="!isAuthenticated()"
@@ -773,16 +781,17 @@
                                     <!-- Link for authenticated users -->
                                     <a th:if="${book != null}" sec:authorize="isAuthenticated()"
                                         th:href="@{'/user/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : defaultCoverUrl}" 
-                                             class="product-image w-100" 
-                                             th:alt="${book != null ? book.title : 'Default Cover'}">
+                                        <img th:src="@{/image/book/{img}(img=${book.cover != null ? book.cover : 'default-book.jpg'})}"
+                                        class="product-image w-100"
+                                        th:alt="${book != null ? book.title : 'Default Cover'}">
+
                                     </a>
                                     <!-- Link for non-authenticated users -->
                                     <a th:if="${book != null}" sec:authorize="!isAuthenticated()"
                                         th:href="@{'/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : defaultCoverUrl}" 
-                                             class="product-image w-100" 
-                                             th:alt="${book != null ? book.title : 'Default Cover'}">
+                                        <img th:src="@{/image/book/{img}(img=${book.cover != null ? book.cover : 'default-book.jpg'})}"
+                                        class="product-image w-100"
+                                        th:alt="${book != null ? book.title : 'Default Cover'}">
                                     </a>
 
                                     <button sec:authorize="isAuthenticated()" th:if="${book != null}" class="wishlist-btn"

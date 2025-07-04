@@ -1,8 +1,21 @@
 package com.vn.ebookstore.model;
 
-import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "books")
@@ -21,11 +34,11 @@ public class Book {
     @Column(name = "deleted_at")
     private Date deletedAt;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "sub_category_id")
     private SubCategory subCategory;
 
-    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private BookDetail bookDetail;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
@@ -174,5 +187,19 @@ public class Book {
 
     public Integer getReviewCount() {
         return this.reviews != null ? this.reviews.size() : 0;
+    }
+
+    public void updateAverageRating() {
+        if (this.reviews != null && !this.reviews.isEmpty()) {
+            double sum = 0;
+            for (Review review : this.reviews) {
+                sum += review.getRating();
+            }
+            this.averageRating = sum / this.reviews.size();
+            this.reviewCount = this.reviews.size();
+        } else {
+            this.averageRating = null;
+            this.reviewCount = 0;
+        }
     }
 }

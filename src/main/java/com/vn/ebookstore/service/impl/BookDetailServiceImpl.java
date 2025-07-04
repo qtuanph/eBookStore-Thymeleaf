@@ -31,6 +31,10 @@ public class BookDetailServiceImpl implements BookDetailService {
         existingDetail.setFileUrl(bookDetail.getFileUrl());
         return bookDetailRepository.save(existingDetail);
     }
+    @Override
+    public BookDetail getBookDetailByBookId(int bookId) {
+        return bookDetailRepository.findByBookId(bookId);
+    }
 
     @Override
     public void deleteBookDetail(int id) {

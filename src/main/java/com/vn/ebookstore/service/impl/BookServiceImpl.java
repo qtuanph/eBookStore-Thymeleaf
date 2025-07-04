@@ -1,17 +1,18 @@
 package com.vn.ebookstore.service.impl;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.vn.ebookstore.model.Book;
 import com.vn.ebookstore.model.Category;
 import com.vn.ebookstore.repository.BookRepository;
 import com.vn.ebookstore.repository.CategoryRepository;
 import com.vn.ebookstore.repository.SubCategoryRepository;
 import com.vn.ebookstore.service.BookService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -25,9 +26,20 @@ public class BookServiceImpl implements BookService {
     @Autowired
     private SubCategoryRepository subCategoryRepository;
 
+    
+    @Override
+    public void save(Book book) {
+         bookRepository.save(book);
+    }
+
     @Override
     public Book createBook(Book book) {
-        return bookRepository.save(book);
+         // Nếu bookDetail tồn tại, cần thiết lập lại quan hệ 2 chiều
+        if (book.getBookDetail() != null) {
+        book.getBookDetail().setBook(book); // rất quan trọng
+        }
+
+        return bookRepository.save(book); // cascade sẽ lưu luôn bookDetail
     }
 
     @Override
@@ -68,6 +80,15 @@ public class BookServiceImpl implements BookService {
         if (category.getDeletedAt() != null) {
             throw new RuntimeException("Category has been deleted");
         }
+
+          List<Integer> subCategoryIds = category.getSubCategories()
+            .stream()
+            .filter(sub -> sub.getDeletedAt() == null)
+            .map(sub -> sub.getId())
+            .toList();
+
+        if (subCategoryIds.isEmpty()) return List.of(); // Không có sub nào
+
         return bookRepository.findBySubCategory_Category_IdAndDeletedAtIsNull(categoryId);
     }
 

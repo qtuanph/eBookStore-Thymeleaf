@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 @EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
 
+    
     private final UserService userService;
 
     public WebSecurityConfig(UserService userService) {

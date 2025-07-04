@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Thêm/Sửa Sách</title>
+     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        div {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        a {
+            margin-left: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    
+</head>
+<body>
+<h1 th:text="${book.id} != null ? 'Sửa sách' : 'Thêm sách mới'">THông tin sách</h1>
+
+<form th:action="@{/admin/books/update}" enctype="multipart/form-data" th:object="${book}" method="post">
+    <input type="hidden" th:field="*{id}" />
+    <div>
+        <label>Tiêu đề:</label>
+        <input type="text" th:field="*{title}" required />
+    </div>
+    <div>
+        <label>Tác giả:</label>
+        <input type="text" th:field="*{author}" required />
+    </div>
+    <div>
+        <label>Giá:</label>
+        <input type="number" step="1000" th:field="*{price}" required />
+    </div>
+     <div>
+        <label>Ảnh bìa hiện tại:</label>
+        <img th:src="${book.cover != null} ? @{/image/cover/{img}(img=${book.cover})} : @{/image/cover/default.jpg}"
+             alt="Ảnh bìa"
+             class="preview" />
+    </div>
+     <div>
+        <label>Thay ảnh bìa (tùy chọn):</label>
+        <input type="file" name="coverFile" accept="image/*" />
+    </div>
+      <label>Mô tả:</label>
+        <textarea th:field="*{bookDetail.description}"></textarea>
+
+        <label>Tóm tắt:</label>
+        <textarea th:field="*{bookDetail.summary}"></textarea>
+
+        <label>ISBN:</label>
+        <input type="text" th:field="*{bookDetail.isbn}" />
+
+        <label>Nhà xuất bản:</label>
+        <input type="text" th:field="*{bookDetail.publisher}" />
+
+        <label>Ngày xuất bản:</label>
+        <input type="date" th:field="*{bookDetail.publicationDate}" />
+
+        <label>Số trang:</label>
+        <input type="number" th:field="*{bookDetail.pages}" />
+
+        <label>File PDF:</label>
+        <input type="file" name="pdfFile" />
+        <div th:if="*{bookDetail != null && bookDetail.fileUrl != null}">
+            <a th:href="@{/file/book/{file}(file=*{bookDetail.fileUrl})}" target="_blank">📄 Tải file hiện tại</a>
+        </div>
+        <div>
+            <label>Danh mục con:</label>
+            <select th:field="*{subCategory.id}" required>
+                <option value="" disabled th:if="${book.subCategory == null}" selected>-- Chọn danh mục con --</option>
+                <option th:each="sub : ${subCategories}" th:value="${sub.id}" th:text="${sub.name}"></option>
+            </select>
+        </div>
+
+    <div>
+        <button type="submit">💾 Lưu</button>
+        <a th:href="@{/admin/books}">🔙 Quay lại</a>
+    </div>
+</form>
+</body>
+</html>

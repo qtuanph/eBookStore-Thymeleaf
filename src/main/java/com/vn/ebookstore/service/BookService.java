@@ -30,4 +30,6 @@ public interface BookService {
     Double getLowestPrice();
     Double getHighestPrice();
     long getTotalBooks();
+    void save(Book existingBook);
+    
 }

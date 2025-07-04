@@ -11,7 +11,12 @@ import java.util.List;
 public interface BookRepository extends JpaRepository<Book, Integer> {
     List<Book> findBySubCategory_Category_IdAndDeletedAtIsNull(Integer categoryId);
     List<Book> findBySubCategoryIdAndDeletedAtIsNull(Integer subCategoryId);
-    
+    List<Book> findBySubCategoryIdInAndDeletedAtIsNull(List<Integer> subCategoryIds);
+
+    @Query("SELECT b FROM Book b LEFT JOIN FETCH b.bookDetail WHERE b.deletedAt IS NULL ORDER BY b.createdAt DESC")
+    List<Book> findAllWithBookDetail();
+
+
     @Query("SELECT b FROM Book b WHERE b.deletedAt IS NULL ORDER BY b.createdAt DESC")
     List<Book> findLatestBooks();
     

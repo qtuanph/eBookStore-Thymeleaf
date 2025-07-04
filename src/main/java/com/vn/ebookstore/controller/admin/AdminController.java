@@ -1,4 +1,4 @@
-package com.vn.ebookstore.controller;
+package com.vn.ebookstore.controller.admin;
 
 import com.vn.ebookstore.model.*;
 import com.vn.ebookstore.service.*;

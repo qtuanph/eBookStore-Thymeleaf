@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý sách - Hanoi Aptech Bookstore</title>
-    
+
     <!-- 1. jQuery first -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     <!-- 2. Popper JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-    
+
     <!-- 3. Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- 4. Custom scripts -->
     <script th:src="@{/js/script_admin_dashboard.js}"></script>
     <script th:src="@{/js/script_admin_books.js}"></script>
@@ -30,10 +31,11 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             background-color: #f9f9f9;
-            box-shadow: 0 0 4px rgba(0,0,0,0.05);
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
+
 <body>
     <div class="wrapper">
         <!-- Sidebar -->
@@ -93,25 +95,36 @@
                                     <tr th:each="book : ${books}">
                                         <td th:text="${book.id}">1</td>
                                         <td>
-                                            <img class="cover-image" th:src="@{/image/cover/{img}(img=${book.cover} ?: 'default.jpg')}" alt="Ảnh bìa" />
+                                            <img class="cover-image"
+                                                th:src="${book.cover != null} ? @{'/image/book/' + ${book.cover}} : @{'/image/book/default.jpg'}"
+                                                alt="Ảnh bìa" />
                                         </td>
                                         <td th:text="${book.title}">Tựa sách</td>
                                         <td th:text="${book.author}">Tác giả</td>
-                                        <td th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">99.000</td>
-                                        <td th:text="${book.bookDetail != null ? book.bookDetail.description : ''}">Mô tả</td>
-                                        <td th:text="${book.bookDetail != null ? book.bookDetail.summary : ''}">Tóm tắt</td>
+                                        <td
+                                            th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                            99.000</td>
+                                        <td th:text="${book.bookDetail != null ? book.bookDetail.description : ''}">Mô
+                                            tả</td>
+                                        <td th:text="${book.bookDetail != null ? book.bookDetail.summary : ''}">Tóm tắt
+                                        </td>
                                         <td th:text="${book.bookDetail != null ? book.bookDetail.isbn : ''}">ISBN</td>
-                                        <td th:text="${book.bookDetail != null ? book.bookDetail.publisher : ''}">Nhà xuất bản</td>
-                                        <td th:text="${book.bookDetail != null && book.bookDetail.publicationDate != null ? #temporals.format(book.bookDetail.publicationDate, 'dd/MM/yyyy') : ''}">Ngày xuất bản</td>
-                                        <td th:text="${book.bookDetail != null ? book.bookDetail.pages : ''}">Số trang</td>
-                                        <td th:text="${book.subCategory != null ? book.subCategory.name : 'Chưa có'}">Danh mục</td>
+                                        <td th:text="${book.bookDetail != null ? book.bookDetail.publisher : ''}">Nhà
+                                            xuất bản</td>
+                                        <td
+                                            th:text="${book.bookDetail != null && book.bookDetail.publicationDate != null ? #temporals.format(book.bookDetail.publicationDate, 'dd/MM/yyyy') : ''}">
+                                            Ngày xuất bản</td>
+                                        <td th:text="${book.bookDetail != null ? book.bookDetail.pages : ''}">Số trang
+                                        </td>
+                                        <td th:text="${book.subCategory != null ? book.subCategory.name : 'Chưa có'}">
+                                            Danh mục</td>
                                         <td>
-                                            <button type="button" class="btn btn-sm btn-primary me-1" 
-                                                    th:onclick="'editBook(' + ${book.id} + ')'" data-bs-toggle="modal">
+                                            <button type="button" class="btn btn-sm btn-primary me-1"
+                                                th:onclick="'editBook(' + ${book.id} + ')'" data-bs-toggle="modal">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <button type="button" class="btn btn-sm btn-danger"
-                                                    th:onclick="'deleteBook(' + ${book.id} + ')'">
+                                                th:onclick="'deleteBook(' + ${book.id} + ')'">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>
@@ -134,7 +147,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addBookForm" th:action="@{/admin/books/save}" enctype="multipart/form-data" th:object="${book}" method="post">
+                    <form id="addBookForm" th:action="@{/admin/books/save}" enctype="multipart/form-data"
+                        th:object="${book}" method="post">
                         <input type="hidden" th:field="*{id}" />
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -152,9 +166,7 @@
                             <div class="col-md-6">
                                 <label class="form-label">Danh mục:</label>
                                 <select class="form-select" th:field="*{subCategory.id}">
-                                    <option th:each="sub : ${subCategories}"
-                                            th:value="${sub.id}"
-                                            th:text="${sub.name}">
+                                    <option th:each="sub : ${subCategories}" th:value="${sub.id}" th:text="${sub.name}">
                                     </option>
                                 </select>
                             </div>
@@ -201,82 +213,139 @@
         </div>
     </div>
 
-    <!-- Edit Book Modal -->
+    <!-- Updated Edit Book Modal -->
     <div class="modal fade" id="editBookModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sửa sách</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Sửa thông tin sách</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="editBookForm" th:action="@{/admin/books/update}" enctype="multipart/form-data" method="post">
+                    <form id="editBookForm" th:action="@{/admin/books/update}" method="post"
+                        enctype="multipart/form-data">
                         <input type="hidden" name="id" />
-                        <div class="row g-3">
+                        <div class="row g-4">
+                            <!-- Tiêu đề & Tác giả -->
                             <div class="col-md-6">
-                                <label class="form-label">Tiêu đề:</label>
+                                <label class="form-label">Tiêu đề</label>
                                 <input type="text" class="form-control" name="title" required />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Tác giả:</label>
+                                <label class="form-label">Tác giả</label>
                                 <input type="text" class="form-control" name="author" required />
                             </div>
+
+                            <!-- Giá & Danh mục -->
                             <div class="col-md-6">
-                                <label class="form-label">Giá:</label>
-                                <input type="number" class="form-control" step="1000" name="price" required />
+                                <label class="form-label">Giá</label>
+                                <input type="number" class="form-control" name="price" step="1000" required />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Danh mục:</label>
+                                <label class="form-label">Danh mục</label>
                                 <select class="form-select" name="subCategory.id">
-                                    <option th:each="sub : ${subCategories}"
-                                            th:value="${sub.id}"
-                                            th:text="${sub.name}">
+                                    <option value="">-- Chọn danh mục --</option>
+                                    <option th:each="sub : ${subCategories}" th:value="${sub.id}" th:text="${sub.name}">
                                     </option>
                                 </select>
                             </div>
+
+                            <!-- Ảnh bìa -->
                             <div class="col-md-6">
-                                <label class="form-label">Ảnh bìa:</label>
-                                <div class="current-cover mb-2"></div>
+                                <label class="form-label">Ảnh bìa hiện tại</label>
+                                <div class="mb-2">
+                                    <img id="currentCoverImage" src="#" class="img-thumbnail"
+                                        style="height: 180px; object-fit: contain;">
+                                </div>
+                                <label class="form-label">Chọn ảnh mới</label>
                                 <input type="file" class="form-control" name="coverFile" accept="image/*" />
                             </div>
+
+                            <!-- File sách -->
                             <div class="col-md-6">
-                                <label class="form-label">File sách (PDF):</label>
-                                <div class="current-file mb-2"></div>
+                                <label class="form-label">File PDF hiện tại</label>
+                                <div class="mb-2" id="currentFileInfo">
+                                    <span class="badge bg-secondary">Chưa có</span>
+                                </div>
+                                <label class="form-label">Chọn file mới</label>
                                 <input type="file" class="form-control" name="bookFile" accept="application/pdf" />
                             </div>
+
+                            <!-- Mô tả -->
                             <div class="col-12">
-                                <label class="form-label">Mô tả:</label>
+                                <label class="form-label">Mô tả</label>
                                 <textarea class="form-control" name="bookDetail.description" rows="3"></textarea>
                             </div>
+
+                            <!-- Tóm tắt -->
                             <div class="col-12">
-                                <label class="form-label">Tóm tắt:</label>
+                                <label class="form-label">Tóm tắt</label>
                                 <textarea class="form-control" name="bookDetail.summary" rows="2"></textarea>
                             </div>
+
+                            <!-- ISBN, NXB, ngày, số trang -->
                             <div class="col-md-6">
-                                <label class="form-label">ISBN:</label>
+                                <label class="form-label">ISBN</label>
                                 <input type="text" class="form-control" name="bookDetail.isbn" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Nhà xuất bản:</label>
+                                <label class="form-label">Nhà xuất bản</label>
                                 <input type="text" class="form-control" name="bookDetail.publisher" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Ngày xuất bản:</label>
+                                <label class="form-label">Ngày xuất bản</label>
                                 <input type="date" class="form-control" name="bookDetail.publicationDate" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Số trang:</label>
+                                <label class="form-label">Số trang</label>
                                 <input type="number" class="form-control" name="bookDetail.pages" />
                             </div>
                         </div>
-                        <div class="text-end mt-3">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+
+                        <div class="text-end mt-4">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times"></i> Hủy
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Cập nhật
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+
+    <script>
+        function editBook(bookId) {
+            fetch(`/admin/books/edit/${bookId}`)
+                .then(res => res.json())
+                .then(book => {
+                    const form = document.getElementById("editBookForm");
+                    form.reset();
+                    form.querySelector('input[name="id"]').value = book.id || '';
+                    form.querySelector('input[name="title"]').value = book.title || '';
+                    form.querySelector('input[name="author"]').value = book.author || '';
+                    form.querySelector('input[name="price"]').value = book.price || '';
+                    form.querySelector('select[name="subCategory.id"]').value = book.subCategoryId || '';
+                    form.querySelector('textarea[name="bookDetail.description"]').value = book.description || '';
+                    form.querySelector('textarea[name="bookDetail.summary"]').value = book.summary || '';
+                    form.querySelector('input[name="bookDetail.isbn"]').value = book.isbn || '';
+                    form.querySelector('input[name="bookDetail.publisher"]').value = book.publisher || '';
+                    form.querySelector('input[name="bookDetail.publicationDate"]').value = book.publicationDate || '';
+                    form.querySelector('input[name="bookDetail.pages"]').value = book.pages || '';
+
+                    document.getElementById("currentCoverImage").src = book.cover ? `/image/book/${book.cover}` : '/image/book/default.jpg';
+                    document.getElementById("currentFileInfo").innerHTML = book.fileUrl
+                        ? `<span class='badge bg-success'>${book.fileUrl}</span>`
+                        : `<span class='badge bg-secondary'>Chưa có</span>`;
+
+                    const modal = new bootstrap.Modal(document.getElementById("editBookModal"));
+                    modal.show();
+                });
+        }
+    </script>
 </body>
+
 </html>

@@ -9,6 +9,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,9 @@ import com.vn.ebookstore.service.UserService;
 @Controller
 @RequestMapping("/admin/users")
 public class AdminUserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
+    private static final Path AVATAR_UPLOAD_PATH = Paths.get(System.getProperty("user.dir"), "uploads", "avatar");
 
     @Autowired
     private UserService userService;
@@ -63,7 +68,7 @@ public class AdminUserController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", userPage.getTotalPages());
         model.addAttribute("roles", roleService.getAllRoles());
-        
+
         if ("true".equals(success)) {
             model.addAttribute("successMessage", "Cập nhật người dùng thành công!");
         }
@@ -86,44 +91,29 @@ public class AdminUserController {
 
     @PostMapping("/create")
     public String createUser(@ModelAttribute("user") User user,
-                            @RequestParam("avatarFile") MultipartFile avatarFile) {
-    // 1. Lưu tên file vào thuộc tính user trước
-    if (!avatarFile.isEmpty()) {
-        String fileName = avatarFile.getOriginalFilename();
-        user.setAvatar(fileName);  //  Đảm bảo gán vào entity trước khi lưu DB
-    }
+                             @RequestParam("avatarFile") MultipartFile avatarFile) {
 
-    // 2. Gắn user cho từng địa chỉ (nếu có)
-    if (user.getAddresses() != null) {
-        for (Address address : user.getAddresses()) {
-            address.setUser(user);
-        }
-    }
-
-    // 4. Lưu file vào resources/static/image/avatar
-    if (!avatarFile.isEmpty()) {
-        try {
-            Path uploadPath = Paths.get("E:/suasang/eBookStore-Thymeleaf/uploads/avatar");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            try {
+                ensureDirectoryExists(AVATAR_UPLOAD_PATH);
+                String fileName = avatarFile.getOriginalFilename();
+                Path filePath = AVATAR_UPLOAD_PATH.resolve(fileName);
+                avatarFile.transferTo(filePath.toFile());
+                user.setAvatar(fileName);
+            } catch (IOException e) {
+                logger.error("Failed to save avatar file", e);
             }
-
-            Path filePath = uploadPath.resolve(avatarFile.getOriginalFilename());
-            avatarFile.transferTo(filePath.toFile());
-
-            System.out.println("Avatar saved to: " + filePath.toAbsolutePath());
-
-
-        } catch (IOException e) {
-            // Use a logger instead of printStackTrace
-            org.slf4j.LoggerFactory.getLogger(AdminUserController.class).error("Failed to save avatar file", e);
         }
-    }
 
-    return "redirect:/admin/users";
-        
-    }
+        if (user.getAddresses() != null) {
+            for (Address address : user.getAddresses()) {
+                address.setUser(user);
+            }
+        }
 
+        userService.save(user);
+        return "redirect:/admin/users";
+    }
 
     @GetMapping("/{id}")
     @ResponseBody
@@ -143,9 +133,16 @@ public class AdminUserController {
     }
 
     @PostMapping("/edit/{id}")
-    public String updateUser(@PathVariable int id, @ModelAttribute("user") User updatedUser,
-                            @RequestParam("avatarFile") MultipartFile avatarFile) throws IOException {
-        updatedUser.setId(id); // đảm bảo ID được giữ lại
+    public String updateUser(@PathVariable int id,
+                             @ModelAttribute("user") User updatedUser,
+                             @RequestParam("avatarFile") MultipartFile avatarFile) throws IOException {
+
+        User existingUser = userService.getUserById(id);
+        if (existingUser == null) {
+            return "redirect:/admin/users?error=notfound";
+        }
+
+        updatedUser.setId(id);
 
         if (updatedUser.getAddresses() != null) {
             for (Address address : updatedUser.getAddresses()) {
@@ -153,37 +150,41 @@ public class AdminUserController {
             }
         }
 
-          User existingUser = userService.getUserById(id);
-
         if (avatarFile != null && !avatarFile.isEmpty()) {
-        String fileName = avatarFile.getOriginalFilename();
-        updatedUser.setAvatar(fileName);
+            ensureDirectoryExists(AVATAR_UPLOAD_PATH);
+            String fileName = avatarFile.getOriginalFilename();
 
-        Path uploadPath = Paths.get("E:/suasang/eBookStore-Thymeleaf/uploads/avatar");
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
+            // Xoá avatar cũ nếu tồn tại
+            if (existingUser.getAvatar() != null) {
+                Path oldAvatarPath = AVATAR_UPLOAD_PATH.resolve(existingUser.getAvatar());
+                if (Files.exists(oldAvatarPath)) {
+                    Files.delete(oldAvatarPath);
+                }
+            }
 
-        try (InputStream inputStream = avatarFile.getInputStream()) {
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Avatar saved to: " + filePath.toAbsolutePath());
-        } catch (IOException e) {
-            org.slf4j.LoggerFactory.getLogger(AdminUserController.class).error("Failed to save avatar file", e);
+            // Lưu avatar mới
+            Path newAvatarPath = AVATAR_UPLOAD_PATH.resolve(fileName);
+            try (InputStream inputStream = avatarFile.getInputStream()) {
+                Files.copy(inputStream, newAvatarPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            updatedUser.setAvatar(fileName);
+        } else {
+            updatedUser.setAvatar(existingUser.getAvatar());
         }
-    } else {
-        updatedUser.setAvatar(existingUser.getAvatar());
-    }
 
         userService.updateUser(id, updatedUser);
-
         return "redirect:/admin/users?success=true";
     }
 
-
-    @GetMapping("delete/{id}")
+    @GetMapping("/delete/{id}")
     public String deleteUser(@PathVariable int id) {
         userService.deleteUser(id);
         return "redirect:/admin/users?success=true";
+    }
+
+    private void ensureDirectoryExists(Path path) throws IOException {
+        if (!Files.exists(path)) {
+            Files.createDirectories(path);
+        }
     }
 }

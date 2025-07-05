@@ -2,6 +2,7 @@ package com.vn.ebookstore.controller.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;
@@ -46,46 +47,53 @@ public class AdminCategoryController {
     }
 
     @PostMapping("/save")
-   public String saveCategory(@ModelAttribute("category") Category category,
-                               @RequestParam("backgroundImage") MultipartFile coverFile) throws IOException {
-        
-       
-    // Nếu là sửa (tức là category đã có id)
-    if (category.getId() != null) {
-        Category existing = categoryService.getCategoryById(category.getId());
-        if (existing != null && (coverFile == null || coverFile.isEmpty())) {
-            // Nếu không chọn ảnh mới -> giữ lại ảnh cũ
-            category.setImage(existing.getImage());
-        }
-    }
+    public String saveCategory(@ModelAttribute("category") Category category,
+                            @RequestParam("backgroundImage") MultipartFile coverFile) throws IOException {
 
-    // Nếu người dùng có upload ảnh mới thì thay thế ảnh
-    if (coverFile != null && !coverFile.isEmpty()) {
-        String fileName = coverFile.getOriginalFilename();
-        String uploadPath = "E:/suasang/eBookStore-Thymeleaf/uploads/category";
-
+        // Đường dẫn đúng: <project-root>/uploads/category
+        String uploadPath = Paths.get(System.getProperty("user.dir"), "uploads", "category").toString();
         File dir = new File(uploadPath);
-        if (!dir.exists()) {
-            dir.mkdirs();
+        if (!dir.exists()) dir.mkdirs();
+
+        // Nếu sửa (category đã có ID)
+        if (category.getId() != null) {
+            Category existing = categoryService.getCategoryById(category.getId());
+
+            if (existing != null) {
+                if (coverFile != null && !coverFile.isEmpty()) {
+                    // Xóa ảnh cũ nếu có
+                    String oldImage = existing.getImage();
+                    if (oldImage != null) {
+                        File oldFile = new File(uploadPath, oldImage);
+                        if (oldFile.exists()) oldFile.delete();
+                    }
+                } else {
+                    // Không upload ảnh mới => giữ ảnh cũ
+                    category.setImage(existing.getImage());
+                }
+            }
         }
 
-        File saveFile = new File(uploadPath, fileName);
-        coverFile.transferTo(saveFile);
-
-        category.setImage(fileName); // Gán ảnh mới
-    }
-
-    // Gắn lại quan hệ 2 chiều với SubCategory
-    List<SubCategory> subs = category.getSubCategories();
-    if (subs != null) {
-        for (SubCategory sub : subs) {
-            sub.setCategory(category);
+        // Upload ảnh mới nếu có
+        if (coverFile != null && !coverFile.isEmpty()) {
+            String fileName = System.currentTimeMillis() + "_" + coverFile.getOriginalFilename();
+            File saveFile = new File(uploadPath, fileName);
+            coverFile.transferTo(saveFile);
+            category.setImage(fileName); // Gán tên file vào DB
         }
+
+        // Gắn quan hệ 2 chiều SubCategory
+        List<SubCategory> subs = category.getSubCategories();
+        if (subs != null) {
+            for (SubCategory sub : subs) {
+                sub.setCategory(category);
+            }
+        }
+
+        categoryService.createCategory(category);
+        return "redirect:/admin/categories";
     }
 
-    categoryService.createCategory(category);
-    return "redirect:/admin/categories";
-    }
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Integer id,Model model) {

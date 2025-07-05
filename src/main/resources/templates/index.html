@@ -560,14 +560,17 @@
                 <div class="row g-4">
                     <div class="col-md-4"
                         th:each="category : ${categories.subList(0, #lists.size(categories) <= 3 ? #lists.size(categories) : 3)}">
-                        <div class="category-card">
-                            <img th:src="${category.image != null and !category.image.isEmpty()} ? 
-                                  @{/image/category/{img}(img=${category.image})} : 
-                                  @{/image/category/default-category.jpg}" alt="Category Image" class="card-img" />
-                            <div class="category-content">
-                                <h3 th:text="${category.name}">Category Name</h3>
-                                <a th:href="@{'/user/category/' + ${category.id}}" class="btn btn-outline-light">Xem
-                                    thêm</a>
+                        <div class="category-card overflow-hidden rounded">
+                            <img th:src="${category.image != null and !category.image.isEmpty()} ?
+                                  @{/image/category/{img}(img=${category.image})} :
+                                  @{/image/category/default-category.jpg}" th:alt="${category.name}"
+                                class="card-img w-100 object-fit-cover"
+                                onerror="this.onerror=null;this.src='/image/category/default-category.jpg';" />
+                            <div
+                                class="category-content position-absolute bottom-0 bg-dark bg-opacity-50 text-white p-3 w-100">
+                                <h3 class="h5 mb-2" th:text="${category.name}">Category Name</h3>
+                                <a th:href="@{'/user/category/' + ${category.id}}"
+                                    class="btn btn-outline-light btn-sm">Xem thêm</a>
                             </div>
                         </div>
                     </div>
@@ -575,6 +578,7 @@
             </div>
         </section>
 
+        <!-- latest-books -->
         <section class="latest-books py-5 bg-light">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -585,18 +589,18 @@
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
                     <th:block th:each="book : ${latestBooks}">
                         <div class="col" th:if="${book != null}">
-                            <div class="product-card shadow-sm">
+                            <div class="product-card shadow-sm h-100 d-flex flex-column">
                                 <div class="position-relative">
-                                    <!-- Link ảnh sách -->
-                                    <a
-                                        th:href="@{${#authorization.expression('isAuthenticated()')} ? '/user/book/' + ${book.id} : '/book/' + ${book.id}}">
+                                    <a th:href="@{${#authorization.expression('isAuthenticated()')} ?
+                                          '/user/book/' + ${book.id} :
+                                          '/book/' + ${book.id}}">
                                         <img th:src="${book.cover != null} ?
-                                             @{/image/cover/{filename}(filename=${book.cover})} :
-                                             @{/image/cover/default.jpg}" class="product-image w-100"
-                                            th:alt="${book.title}" />
+                                             @{/image/book/{filename}(filename=${book.cover})} :
+                                             @{/image/book/default.jpg}" th:alt="${book.title}"
+                                            class="product-image w-100"
+                                            onerror="this.onerror=null;this.src='/image/book/default.jpg';" />
                                     </a>
 
-                                    <!-- Wishlist button -->
                                     <button sec:authorize="isAuthenticated()" class="wishlist-btn"
                                         th:onclick="'toggleWishlist(' + ${book.id} + ')'">
                                         <i th:class="${wishlists != null and #lists.contains(wishlists.![book.id], book.id)} ?
@@ -604,44 +608,41 @@
                                     </button>
                                 </div>
 
-                                <div class="p-3">
-                                    <!-- Badge phân loại -->
-                                    <th:block th:if="${book.subCategory != null}">
-                                        <a th:href="@{${#authorization.expression('isAuthenticated()')} ?
-                                               '/user/subcategory/' + ${book.subCategory.id} :
-                                               '/subcategory/' + ${book.subCategory.id}}"
-                                            class="category-badge mb-2 d-inline-block text-decoration-none"
-                                            th:text="${book.subCategory.name}">Phân loại</a>
-                                    </th:block>
-                                    <th:block th:if="${book.subCategory == null and book.category != null}">
-                                        <a th:href="@{${#authorization.expression('isAuthenticated()')} ?
-                                               '/user/category/' + ${book.category.id} :
-                                               '/category/' + ${book.category.id}}"
-                                            class="category-badge mb-2 d-inline-block text-decoration-none"
-                                            th:text="${book.category.name}">Thể loại</a>
-                                    </th:block>
-
-                                    <!-- Tiêu đề sách -->
-                                    <h6 class="mb-1">
-                                        <a th:href="@{${#authorization.expression('isAuthenticated()')} ?
-                                               '/user/book/' + ${book.id} :
-                                               '/book/' + ${book.id}}" class="text-decoration-none"
-                                            th:text="${book.title}">Tên sách</a>
-                                    </h6>
-
-                                    <!-- Đánh giá -->
-                                    <div class="rating-stars mb-2" th:if="${book.averageRating != null}">
-                                        <th:block th:with="rating=${book.averageRating}">
-                                            <i th:each="i : ${#numbers.sequence(1, 5)}"
-                                                th:class="${i <= rating ? 'fas' : (i <= rating + 0.5 ? 'fas' : 'far')} + ' fa-star'"
-                                                style="color: #fbbf24;"></i>
+                                <div class="p-3 flex-grow-1 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <!-- Category badge -->
+                                        <th:block th:if="${book.subCategory != null}">
+                                            <a th:href="@{'/user/subcategory/' + ${book.subCategory.id}}"
+                                                class="category-badge d-inline-block text-decoration-none mb-2"
+                                                th:text="${book.subCategory.name}">Phân loại</a>
                                         </th:block>
-                                        <span class="text-muted ms-2"
-                                            th:text="'(' + ${book.averageRating} + ' / ' + (${book.reviewCount != null ? book.reviewCount : 0}) + ' đánh giá)'"></span>
+                                        <th:block th:if="${book.subCategory == null and book.category != null}">
+                                            <a th:href="@{'/user/category/' + ${book.category.id}}"
+                                                class="category-badge d-inline-block text-decoration-none mb-2"
+                                                th:text="${book.category.name}">Thể loại</a>
+                                        </th:block>
+
+                                        <!-- Title -->
+                                        <h6 class="mb-2">
+                                            <a th:href="@{'/user/book/' + ${book.id}}" class="text-decoration-none"
+                                                th:text="${book.title}">Tên sách</a>
+                                        </h6>
+
+                                        <!-- Rating -->
+                                        <div class="rating-stars mb-2" th:if="${book.averageRating != null}">
+                                            <th:block th:with="rating=${book.averageRating}">
+                                                <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                                    th:class="${i <= rating ? 'fas' : (i <= rating + 0.5 ? 'fas' : 'far')} + ' fa-star'"
+                                                    style="color: #fbbf24;"></i>
+                                            </th:block>
+                                            <span class="text-muted ms-2"
+                                                th:text="'(' + ${book.averageRating} + ' / ' + (${book.reviewCount != null ? book.reviewCount : 0}) + ' đánh giá)'">
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <!-- Giá + Thêm giỏ hàng -->
-                                    <div class="d-flex justify-content-between align-items-center">
+                                    <!-- Price + Add to Cart -->
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
                                         <span class="price" th:if="${book.price != null}"
                                             th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
                                             100.000 VNĐ
@@ -656,8 +657,7 @@
 
                                         <th:block sec:authorize="!isAuthenticated()">
                                             <a th:href="@{/login}" class="btn cart-btn login-to-buy">
-                                                <i class="fas fa-sign-in-alt"></i>
-                                                Đăng nhập
+                                                <i class="fas fa-sign-in-alt"></i> Đăng nhập
                                             </a>
                                         </th:block>
                                     </div>
@@ -668,7 +668,6 @@
                 </div>
             </div>
         </section>
-
 
         <!-- Best Sellers -->
         <section class="best-sellers py-5">

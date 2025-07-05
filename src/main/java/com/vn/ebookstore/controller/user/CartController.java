@@ -26,7 +26,7 @@ import com.vn.ebookstore.service.UserService;
 import com.vn.ebookstore.service.WishlistService;
 
 @Controller
-@RequestMapping("/user/cart")
+@RequestMapping("/user")
 public class CartController {
      @Autowired
     private CategoryService categoryService;

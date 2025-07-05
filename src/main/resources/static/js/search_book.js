@@ -20,10 +20,10 @@ searchInput.addEventListener('input', (e) => {
                 const resultsHtml = books.map(book => `
                             <a href="${book.url}" class="list-group-item list-group-item-action">
                                 <div class="d-flex align-items-center">
-                                    <img src="${book.cover || '/image/default-book-cover.png'}" 
-                                         alt="Book Cover" 
-                                         class="me-3"
-                                         style="width: 40px; height: 56px; object-fit: cover;">
+                                    <img src="/image/book/${book.cover ? book.cover : 'default.jpg'}" 
+     alt="Book Cover" 
+     class="me-3"
+     style="width: 40px; height: 56px; object-fit: cover;">
                                     <div>
                                         <h6 class="mb-0">${book.title}</h6>
                                         <small class="text-muted">${book.price.toLocaleString('vi-VN')} VNĐ</small>

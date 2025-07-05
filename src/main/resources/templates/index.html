@@ -255,7 +255,11 @@
                                         th:unless="${wishlistStat.index >= 3}">
                                         <td style="width: 60%;">
                                             <div class="d-flex align-items-center">
-                                                <img th:src="${wishlist.book.cover}" alt="Book Cover"
+                                                <img th:if="${wishlist.book != null and wishlist.book.cover != null}"
+                                                    th:src="@{'/image/book/' + ${wishlist.book.cover}}" alt="Book Cover"
+                                                    style="width: 40px; height: 60px; object-fit: cover;" class="me-2">
+                                                <img th:if="${wishlist.book != null and wishlist.book.cover == null}"
+                                                    th:src="@{/image/default-book-cover.png}" alt="Default Cover"
                                                     style="width: 40px; height: 60px; object-fit: cover;" class="me-2">
                                                 <p class="text-break mb-0 small" th:text="${wishlist.book.title}">Book
                                                     Title</p>
@@ -330,7 +334,7 @@
                                         <td style="width: 50%;">
                                             <div class="d-flex align-items-center">
                                                 <img th:if="${item.book != null and item.book.cover != null}"
-                                                    th:src="${item.book.cover}" alt="Book Cover"
+                                                    th:src="@{'/image/book/' + ${item.book.cover}}" alt="Book Cover"
                                                     style="width: 40px; height: 60px; object-fit: cover;" class="me-2">
                                                 <img th:if="${item.book != null and item.book.cover == null}"
                                                     th:src="@{/image/default-book-cover.png}" alt="Default Cover"
@@ -443,22 +447,23 @@
                             <!-- Duyệt danh mục cha -->
                             <th:block th:each="category : ${categories}">
                                 <li>
-                                    <a sec:authorize="isAuthenticated()" class="dropdown-item fw-bold"
-                                        th:href="@{/user/category/{id}(id=${category.id})}" th:text="${category.name}"
-                                        style="color: #EA6C80;"></a>
-                                    <a sec:authorize="!isAuthenticated()" class="dropdown-item fw-bold"
-                                        th:href="@{/category/{id}(id=${category.id})}" th:text="${category.name}"
-                                        style="color: #EA6C80;"></a>
+                                    <a class="dropdown-item fw-bold" th:href="@{/user/category/{id}(id=${category.id})}"
+                                        th:text="${category.name}" style="color: #EA6C80;"
+                                        sec:authorize="isAuthenticated()"></a>
+                                    <a class="dropdown-item fw-bold" th:href="@{/category/{id}(id=${category.id})}"
+                                        th:text="${category.name}" style="color: #EA6C80;"
+                                        sec:authorize="!isAuthenticated()"></a>
                                 </li>
-                                <!-- Duyệt danh mục con -->
+
                                 <th:block th:each="subCategory : ${category.subCategories}">
                                     <li>
-                                        <a sec:authorize="isAuthenticated()" class="dropdown-item"
+                                        <a class="dropdown-item"
                                             th:href="@{/user/subcategory/{id}(id=${subCategory.id})}"
-                                            th:text="${subCategory.name}" style="padding-left: 20px;"></a>
-                                        <a sec:authorize="!isAuthenticated()" class="dropdown-item"
-                                            th:href="@{/subcategory/{id}(id=${subCategory.id})}"
-                                            th:text="${subCategory.name}" style="padding-left: 20px;"></a>
+                                            th:text="${subCategory.name}" style="padding-left: 20px;"
+                                            sec:authorize="isAuthenticated()"></a>
+                                        <a class="dropdown-item" th:href="@{/subcategory/{id}(id=${subCategory.id})}"
+                                            th:text="${subCategory.name}" style="padding-left: 20px;"
+                                            sec:authorize="!isAuthenticated()"></a>
                                     </li>
                                 </th:block>
                             </th:block>

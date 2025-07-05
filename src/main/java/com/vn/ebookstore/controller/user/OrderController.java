@@ -57,7 +57,7 @@ public class OrderController {
     private AddressService addressService;
     @Autowired
     private CouponService couponService;
-    
+
     @GetMapping("/purchase")
     public String showPurchaseForm(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
@@ -215,5 +215,30 @@ public class OrderController {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @PostMapping("/order/{orderId}/confirm-delivery")
+    public String confirmDelivery(@PathVariable Integer orderId, Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            User user = userService.getUserByEmail(principal.getName());
+            OrderDetail order = orderDetailService.getOrderById(orderId);
+
+            if (order == null || !Objects.equals(order.getUser().getId(), user.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Không tìm thấy đơn hàng hoặc không có quyền!");
+                return "redirect:/user/orders";
+            }
+
+            if (!"SHIPPING".equals(order.getStatus())) {
+                redirectAttributes.addFlashAttribute("error", "Chỉ có thể xác nhận khi đơn đang giao hàng!");
+                return "redirect:/user/orders";
+            }
+
+            orderDetailService.updateOrderStatus(orderId, "DELIVERED");
+            redirectAttributes.addFlashAttribute("success", "Xác nhận đã nhận hàng thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi khi xác nhận đơn hàng: " + e.getMessage());
+        }
+        return "redirect:/user/orders";
     }
 }

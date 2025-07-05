@@ -1,10 +1,18 @@
 package com.vn.ebookstore.model;
 
-import jakarta.persistence.*;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "categories")
@@ -23,7 +31,7 @@ public class Category {
     @Column(name = "deleted_at")
     private Date deletedAt;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @OrderBy("id ASC")
     private List<SubCategory> subCategories= new ArrayList<>();
 

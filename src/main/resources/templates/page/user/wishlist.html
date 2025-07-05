@@ -27,7 +27,7 @@
                 <i class="fas fa-trash me-2"></i>Xóa tất cả
             </button>
         </div>
-        
+
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -42,12 +42,12 @@
                 <tbody>
                     <tr th:each="wishlist : ${wishlists}">
                         <td>
-                            <img th:src="${wishlist.book.cover}" alt="Book Cover" style="width: 50px; height: 70px; object-fit: cover;">
+                            <img th:src="@{'/image/book/' + ${wishlist.book.cover}}" alt="Book Cover"
+                                style="width: 50px; height: 70px; object-fit: cover;">
                         </td>
                         <td>
-                            <a th:href="@{/user/book/{id}(id=${wishlist.book.id})}" 
-                               th:text="${wishlist.book.title}"
-                               class="text-decoration-none"></a>
+                            <a th:href="@{/user/book/{id}(id=${wishlist.book.id})}" th:text="${wishlist.book.title}"
+                                class="text-decoration-none"></a>
                         </td>
                         <td>
                             <span class="badge bg-light text-dark" th:text="${wishlist.book.subCategory.name}"></span>
@@ -55,12 +55,12 @@
                         <td th:text="${wishlist.book.price} + ' VNĐ'"></td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button class="btn btn-outline-primary btn-sm" 
-                                        th:onclick="'addToCart(' + ${wishlist.book.id} + ', 1)'">
+                                <button class="btn btn-outline-primary btn-sm"
+                                    th:onclick="'addToCart(' + ${wishlist.book.id} + ', 1)'">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm" 
-                                        th:onclick="'toggleWishlist(' + ${wishlist.book.id} + ')'">
+                                <button class="btn btn-outline-danger btn-sm"
+                                    th:onclick="'toggleWishlist(' + ${wishlist.book.id} + ')'">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -83,7 +83,7 @@
     <script th:src="@{/js/wishlist.js}"></script>
     <script th:src="@{/js/search_book.js}"></script>
 
-    
+
     <script>
         function toggleWishlist(bookId) {
             fetch(`/user/wishlist/toggle/${bookId}`, {
@@ -92,11 +92,11 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                window.location.reload();
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    window.location.reload();
+                })
+                .catch(error => console.error('Error:', error));
         }
 
         function addToCart(bookId, quantity) {
@@ -106,15 +106,15 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                const cartCount = document.querySelector('#cartCount');
-                if (cartCount) {
-                    cartCount.textContent = data.itemCount;
-                }
-                alert('Đã thêm sản phẩm vào giỏ hàng!');
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    const cartCount = document.querySelector('#cartCount');
+                    if (cartCount) {
+                        cartCount.textContent = data.itemCount;
+                    }
+                    alert('Đã thêm sản phẩm vào giỏ hàng!');
+                })
+                .catch(error => console.error('Error:', error));
         }
 
         function clearWishlist() {
@@ -125,10 +125,10 @@
                         'Content-Type': 'application/json'
                     }
                 })
-                .then(() => {
-                    window.location.reload();
-                })
-                .catch(error => console.error('Error:', error));
+                    .then(() => {
+                        window.location.reload();
+                    })
+                    .catch(error => console.error('Error:', error));
             }
         }
     </script>

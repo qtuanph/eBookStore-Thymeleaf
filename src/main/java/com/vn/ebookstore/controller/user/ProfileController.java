@@ -49,6 +49,8 @@ import com.vn.ebookstore.service.WishlistService;
 public class ProfileController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileController.class);
+    private static final Path AVATAR_UPLOAD_DIR = Paths.get(System.getProperty("user.dir"), "uploads", "avatar");
+
     @Autowired
     private CategoryService categoryService;
     @Autowired
@@ -59,6 +61,7 @@ public class ProfileController {
     private WishlistService wishlistService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     @GetMapping("/profile")
     public String showProfile(Model model, Principal principal) {
         List<Category> categories = categoryService.getAllCategories();
@@ -120,9 +123,9 @@ public class ProfileController {
 
     @PostMapping("/profile/update-username")
     public String updateUsername(@RequestParam("newUsername") String newUsername,
-                                 @RequestParam("confirmPassword") String confirmPassword,
-                                 Principal principal,
-                                 RedirectAttributes redirectAttributes) {
+            @RequestParam("confirmPassword") String confirmPassword,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             User user = userService.getUserByEmail(principal.getName());
 
@@ -195,36 +198,33 @@ public class ProfileController {
             }
 
             if (avatar != null && !avatar.isEmpty()) {
-                String uploadDir = "src/main/resources/static/image/avatar";
-                String oldAvatarPath = null;
+                // Tạo thư mục nếu chưa có
+                Files.createDirectories(AVATAR_UPLOAD_DIR);
 
+                // Xóa file cũ nếu có
                 if (currentUser.getAvatar() != null) {
-                    oldAvatarPath = "src/main/resources/static" + currentUser.getAvatar();
+                    try {
+                        Path oldPath = AVATAR_UPLOAD_DIR
+                                .resolve(Paths.get(currentUser.getAvatar()).getFileName().toString());
+                        Files.deleteIfExists(oldPath);
+                    } catch (IOException e) {
+                        logger.warn("Không thể xóa avatar cũ: " + e.getMessage());
+                    }
                 }
 
-                Path uploadPath = Paths.get(uploadDir);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
+                // Lưu file mới
                 String originalFilename = avatar.getOriginalFilename();
                 String extension = "";
                 if (originalFilename != null && originalFilename.lastIndexOf(".") != -1) {
                     extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 }
+
                 String filename = UUID.randomUUID().toString() + extension;
-
-                Path filePath = uploadPath.resolve(filename);
+                Path filePath = AVATAR_UPLOAD_DIR.resolve(filename);
                 Files.copy(avatar.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                currentUser.setAvatar("/image/avatar/" + filename);
 
-                if (oldAvatarPath != null) {
-                    try {
-                        Files.deleteIfExists(Paths.get(oldAvatarPath));
-                    } catch (IOException e) {
-                        logger.warn("Không thể xóa avatar cũ: " + e.getMessage());
-                    }
-                }
+                // Lưu đường dẫn public
+                currentUser.setAvatar(filename);
             }
 
             if (currentUser.getAddresses() == null || currentUser.getAddresses().isEmpty()) {
@@ -248,8 +248,7 @@ public class ProfileController {
             Authentication newAuth = new UsernamePasswordAuthenticationToken(
                     userDetails,
                     null,
-                    userDetails.getAuthorities()
-            );
+                    userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(newAuth);
 
             redirectAttributes.addFlashAttribute("success", "Thông tin cá nhân đã được cập nhật");

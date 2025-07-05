@@ -40,7 +40,7 @@ public class AdminBookController {
     private final CategoryService categoryService;
 
     public AdminBookController(BookService bookService, BookDetailService bookDetailService,
-                                SubCategoryService subCategoryService, CategoryService categoryService) {
+            SubCategoryService subCategoryService, CategoryService categoryService) {
         this.bookService = bookService;
         this.bookDetailService = bookDetailService;
         this.subCategoryService = subCategoryService;
@@ -71,8 +71,8 @@ public class AdminBookController {
 
     @PostMapping("/save")
     public String saveBook(@ModelAttribute("book") Book book,
-                           @RequestParam("coverFile") MultipartFile coverFile,
-                           @RequestParam("bookFile") MultipartFile bookFile) throws IOException {
+            @RequestParam("coverFile") MultipartFile coverFile,
+            @RequestParam("bookFile") MultipartFile bookFile) throws IOException {
 
         Files.createDirectories(COVER_UPLOAD_DIR);
         Files.createDirectories(PDF_UPLOAD_DIR);
@@ -152,7 +152,8 @@ public class AdminBookController {
                     response.put("summary", detail.getSummary());
                     response.put("isbn", detail.getIsbn());
                     response.put("publisher", detail.getPublisher());
-                    response.put("publicationDate", detail.getPublicationDate() != null ? detail.getPublicationDate().toString() : null);
+                    response.put("publicationDate",
+                            detail.getPublicationDate() != null ? detail.getPublicationDate().toString() : null);
                     response.put("pages", detail.getPages());
                     response.put("fileUrl", detail.getFileUrl());
                 }
@@ -167,8 +168,8 @@ public class AdminBookController {
 
     @PostMapping("/update")
     public String updateBook(@ModelAttribute Book book,
-                             @RequestParam(required = false) MultipartFile coverFile,
-                             @RequestParam(required = false) MultipartFile bookFile) throws IOException {
+            @RequestParam(required = false) MultipartFile coverFile,
+            @RequestParam(required = false) MultipartFile bookFile) throws IOException {
 
         Files.createDirectories(COVER_UPLOAD_DIR);
         Files.createDirectories(PDF_UPLOAD_DIR);
@@ -178,47 +179,62 @@ public class AdminBookController {
             return "redirect:/admin/books?error=not-found";
         }
 
+        // Cập nhật thông tin cơ bản
         existingBook.setTitle(book.getTitle());
         existingBook.setAuthor(book.getAuthor());
         existingBook.setPrice(book.getPrice());
 
+        // Xử lý chi tiết sách
         BookDetail detail = existingBook.getBookDetail();
         if (detail == null) {
             detail = new BookDetail();
             detail.setBook(existingBook);
         }
 
-        detail.setDescription(book.getBookDetail().getDescription());
-        detail.setSummary(book.getBookDetail().getSummary());
-        detail.setIsbn(book.getBookDetail().getIsbn());
-        detail.setPublisher(book.getBookDetail().getPublisher());
-        detail.setPublicationDate(book.getBookDetail().getPublicationDate());
-        detail.setPages(book.getBookDetail().getPages());
+        BookDetail incomingDetail = book.getBookDetail();
+        if (incomingDetail != null) {
+            detail.setDescription(incomingDetail.getDescription());
+            detail.setSummary(incomingDetail.getSummary());
+            detail.setIsbn(incomingDetail.getIsbn());
+            detail.setPublisher(incomingDetail.getPublisher());
+            detail.setPublicationDate(incomingDetail.getPublicationDate());
+            detail.setPages(incomingDetail.getPages());
+        }
 
+        // ✅ Xử lý ảnh bìa (nếu có)
         if (coverFile != null && !coverFile.isEmpty()) {
-            if (existingBook.getCover() != null) {
-                Path oldCover = COVER_UPLOAD_DIR.resolve(existingBook.getCover());
-                Files.deleteIfExists(oldCover);
+            String oldCoverName = existingBook.getCover();
+            if (oldCoverName != null && !oldCoverName.isBlank()) {
+                Path oldCoverPath = COVER_UPLOAD_DIR.resolve(oldCoverName);
+                if (Files.exists(oldCoverPath) && Files.isRegularFile(oldCoverPath)) {
+                    Files.delete(oldCoverPath); // chỉ xóa file, không dính folder
+                }
             }
-            String fileName = System.currentTimeMillis() + "_" + coverFile.getOriginalFilename();
-            Path savePath = COVER_UPLOAD_DIR.resolve(fileName);
-            coverFile.transferTo(savePath);
-            existingBook.setCover(fileName);
+
+            String newFileName = System.currentTimeMillis() + "_" + coverFile.getOriginalFilename();
+            Path newCoverPath = COVER_UPLOAD_DIR.resolve(newFileName);
+            coverFile.transferTo(newCoverPath);
+            existingBook.setCover(newFileName);
         }
 
+        // ✅ Xử lý file sách (nếu có)
         if (bookFile != null && !bookFile.isEmpty()) {
-            String fileName = System.currentTimeMillis() + "_" + bookFile.getOriginalFilename();
-            Path savePath = PDF_UPLOAD_DIR.resolve(fileName);
-            bookFile.transferTo(savePath);
-            detail.setFileUrl(fileName);
+            String newPdfFileName = System.currentTimeMillis() + "_" + bookFile.getOriginalFilename();
+            Path newPdfPath = PDF_UPLOAD_DIR.resolve(newPdfFileName);
+            bookFile.transferTo(newPdfPath);
+            detail.setFileUrl(newPdfFileName);
         }
 
+        // Cập nhật SubCategory nếu có
         if (book.getSubCategory() != null && book.getSubCategory().getId() != null) {
             SubCategory subCategory = subCategoryService.getSubCategoryById(book.getSubCategory().getId());
             existingBook.setSubCategory(subCategory);
         }
 
+        // Lưu mọi thứ
         bookService.save(existingBook);
+        bookDetailService.updateBookDetail(detail.getId(), detail); // bạn nên đảm bảo ID detail tồn tại
+
         return "redirect:/admin/books?success=updated";
     }
 

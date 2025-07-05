@@ -28,42 +28,20 @@
         <!-- Top Bar -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0">Danh sách sản phẩm</h4>
-            
-            <!-- Phần sắp xếp -->
+            <!-- Sắp xếp -->
             <div class="d-flex gap-2 align-items-center">
                 <div class="btn-group">
-                    <a th:href="@{/user/products(
-                            categoryId=${selectedCategoryId},
-                            subCategoryId=${selectedSubCategoryId},
-                            minPrice=${selectedMinPrice},
-                            maxPrice=${selectedMaxPrice},
-                            minRating=${selectedMinRating},
-                            sortBy='newest',
-                            sortDir='desc')}"
-                       th:class="'btn btn-outline-primary ' + (${sortBy == 'newest'} ? 'active' : '')">
+                    <a th:href="@{/user/products(categoryId=${selectedCategoryId},subCategoryId=${selectedSubCategoryId},minPrice=${selectedMinPrice},maxPrice=${selectedMaxPrice},minRating=${selectedMinRating},sortBy='newest',sortDir='desc')}"
+                        th:class="'btn btn-outline-primary ' + (${sortBy == 'newest'} ? 'active' : '')">
                         Mới nhất
                     </a>
-                    <a th:href="@{/user/products(
-                            categoryId=${selectedCategoryId},
-                            subCategoryId=${selectedSubCategoryId},
-                            minPrice=${selectedMinPrice},
-                            maxPrice=${selectedMaxPrice},
-                            minRating=${selectedMinRating},
-                            sortBy='price',
-                            sortDir=${sortBy == 'price' and sortDir == 'asc' ? 'desc' : 'asc'})}"
-                       th:class="'btn btn-outline-primary ' + (${sortBy == 'price'} ? 'active' : '')">
-                        Giá 
-                        <i th:class="${sortBy == 'price' ? (sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') : 'fas fa-sort'}"></i>
+                    <a th:href="@{/user/products(categoryId=${selectedCategoryId},subCategoryId=${selectedSubCategoryId},minPrice=${selectedMinPrice},maxPrice=${selectedMaxPrice},minRating=${selectedMinRating},sortBy='price',sortDir=${sortBy == 'price' and sortDir == 'asc' ? 'desc' : 'asc'})}"
+                        th:class="'btn btn-outline-primary ' + (${sortBy == 'price'} ? 'active' : '')">
+                        Giá <i
+                            th:class="${sortBy == 'price' ? (sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') : 'fas fa-sort'}"></i>
                     </a>
-                    <a th:href="@{/user/products(
-                            categoryId=${selectedCategoryId},
-                            subCategoryId=${selectedSubCategoryId},
-                            minPrice=${selectedMinPrice},
-                            maxPrice=${selectedMaxPrice},
-                            minRating=${selectedMinRating},
-                            sortBy='rating',
-                            sortDir='desc')}"
-                       th:class="'btn btn-outline-primary ' + (${sortBy == 'rating'} ? 'active' : '')">
+                    <a th:href="@{/user/products(categoryId=${selectedCategoryId},subCategoryId=${selectedSubCategoryId},minPrice=${selectedMinPrice},maxPrice=${selectedMaxPrice},minRating=${selectedMinRating},sortBy='rating',sortDir='desc')}"
+                        th:class="'btn btn-outline-primary ' + (${sortBy == 'rating'} ? 'active' : '')">
                         Đánh giá cao
                     </a>
                 </div>
@@ -71,7 +49,7 @@
         </div>
 
         <div class="row">
-            <!-- Filters Sidebar -->
+            <!-- Sidebar lọc -->
             <div class="col-lg-3">
                 <div class="filter-sidebar card">
                     <div class="card-body">
@@ -82,10 +60,8 @@
                                 <label class="form-label">Danh mục</label>
                                 <select class="form-select" name="categoryId" onchange="this.form.submit()">
                                     <option value="">Tất cả danh mục</option>
-                                    <option th:each="category : ${categories}"
-                                            th:value="${category.id}"
-                                            th:text="${category.name}"
-                                            th:selected="${category.id == selectedCategoryId}">
+                                    <option th:each="category : ${categories}" th:value="${category.id}"
+                                        th:text="${category.name}" th:selected="${category.id == selectedCategoryId}">
                                     </option>
                                 </select>
                             </div>
@@ -98,32 +74,29 @@
                                     <th:block th:each="category : ${categories}">
                                         <th:block th:if="${category.id == selectedCategoryId}">
                                             <option th:each="subCategory : ${category.subCategories}"
-                                                    th:value="${subCategory.id}"
-                                                    th:text="${subCategory.name}"
-                                                    th:selected="${subCategory.id == selectedSubCategoryId}">
-                                            </option>
+                                                th:value="${subCategory.id}" th:text="${subCategory.name}"
+                                                th:selected="${subCategory.id == selectedSubCategoryId}"></option>
                                         </th:block>
                                     </th:block>
                                 </select>
                             </div>
 
-                            <!-- Khoảng giá -->
+                            <!-- Giá -->
                             <div class="mb-3">
                                 <label class="form-label">Giá (VNĐ)</label>
                                 <div class="d-flex gap-2">
                                     <input type="text" class="form-control formatted-number" name="rawMinPrice"
-                                           th:value="${#numbers.formatDecimal(selectedMinPrice != null ? selectedMinPrice : 0, 0, 'COMMA', 0, 'POINT')}"
-                                           placeholder="Từ">
+                                        th:value="${#numbers.formatDecimal(selectedMinPrice != null ? selectedMinPrice : 0, 0, 'COMMA', 0, 'POINT')}"
+                                        placeholder="Từ">
                                     <input type="text" class="form-control formatted-number" name="rawMaxPrice"
-                                           th:value="${#numbers.formatDecimal(selectedMaxPrice != null ? selectedMaxPrice : highestPrice, 0, 'COMMA', 0, 'POINT')}"
-                                           placeholder="Đến">
-                                    <!-- Hidden fields for actual values -->
+                                        th:value="${#numbers.formatDecimal(selectedMaxPrice != null ? selectedMaxPrice : highestPrice, 0, 'COMMA', 0, 'POINT')}"
+                                        placeholder="Đến">
                                     <input type="hidden" name="minPrice" th:value="${selectedMinPrice}">
                                     <input type="hidden" name="maxPrice" th:value="${selectedMaxPrice}">
                                 </div>
                             </div>
 
-                            <!-- Đánh giá tối thiểu -->
+                            <!-- Đánh giá -->
                             <div class="mb-3">
                                 <label class="form-label">Đánh giá tối thiểu</label>
                                 <select class="form-select" name="minRating" onchange="this.form.submit()">
@@ -142,85 +115,51 @@
                 </div>
             </div>
 
-            <!-- Product Grid -->
+            <!-- Grid sản phẩm -->
             <div class="col-lg-9">
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                     <th:block th:if="${books != null}" th:each="book : ${books}">
                         <div class="col">
                             <div class="product-card shadow-sm">
                                 <div class="position-relative">
-                                    <!-- Link for authenticated users -->
-                                    <a th:if="${book != null}" sec:authorize="isAuthenticated()" th:href="@{'/user/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : '/image/default-book-cover.png'}" 
-                                             class="product-image w-100" 
-                                             th:alt="${book != null ? book.title : 'Default Cover'}"
-                                             alt="Default Cover">
+                                    <a
+                                        th:href="@{${#authorization.expression('isAuthenticated()')} ? '/user/book/' + ${book.id} : '/book/' + ${book.id}}">
+                                        <img th:src="${book.cover != null} 
+              ? @{/image/book/{filename}(filename=${book.cover})} 
+              : @{/image/book/default.jpg}" class="product-image w-100" th:alt="${book.title}" alt="Bìa sách">
+
                                     </a>
-                                    <!-- Link for non-authenticated users -->
-                                    <a th:if="${book != null}" sec:authorize="!isAuthenticated()" th:href="@{'/book/' + ${book.id}}">
-                                        <img th:src="${book != null and book.cover != null ? book.cover : '/image/default-book-cover.png'}" 
-                                             class="product-image w-100" 
-                                             th:alt="${book != null ? book.title : 'Default Cover'}"
-                                             alt="Default Cover">
-                                    </a>
-                                    
-                                    <button sec:authorize="isAuthenticated()" th:if="${book != null}" class="wishlist-btn" th:onclick="'toggleWishlist(' + ${book.id} + ')'">
-                                        <i class="far fa-heart" th:class="${wishlists != null and #lists.contains(wishlists.![book.id], book.id)} ? 'fas fa-heart text-danger' : 'far fa-heart'"></i>
+                                    <button sec:authorize="isAuthenticated()" class="wishlist-btn"
+                                        th:onclick="'toggleWishlist(' + ${book.id} + ')'">
+                                        <i
+                                            th:class="${wishlists != null and #lists.contains(wishlists.![book.id], book.id)} ? 'fas fa-heart text-danger' : 'far fa-heart'"></i>
                                     </button>
                                 </div>
-                                <!-- Category badge with link -->
                                 <div class="p-3">
-                                    <a th:if="${book != null and book.subCategory != null}" 
-                                       sec:authorize="isAuthenticated()"
-                                       th:href="@{/user/subcategory/{id}(id=${book.subCategory.id})}"
-                                       class="category-badge mb-2 d-inline-block text-decoration-none"
-                                       th:text="${book.subCategory.name}">Category Name</a>
-                                    
-                                    <a th:if="${book != null and book.subCategory != null}" 
-                                       sec:authorize="!isAuthenticated()"
-                                       th:href="@{/subcategory/{id}(id=${book.subCategory.id})}"
-                                       class="category-badge mb-2 d-inline-block text-decoration-none"
-                                       th:text="${book.subCategory.name}">Category Name</a>
-                                
-                                    <a th:if="${book != null and book.subCategory == null}" 
-                                       sec:authorize="isAuthenticated()"
-                                       th:href="@{/user/category/{id}(id=${book.subCategory.category.id})}"
-                                       class="category-badge mb-2 d-inline-block text-decoration-none"
-                                       th:text="${book.subCategory.category.name}">Category Name</a>
-                                    
-                                    <a th:if="${book != null and book.subCategory == null}" 
-                                       sec:authorize="!isAuthenticated()"
-                                       th:href="@{/category/{id}(id=${book.subCategory.category.id})}"
-                                       class="category-badge mb-2 d-inline-block text-decoration-none"
-                                       th:text="${book.subCategory.category.name}">Category Name</a>
-                                    
-                                    <!-- Rest of product card content -->
-                                    <!-- Tiêu đề sách -->
-                                    <h6 class="mb-1" th:if="${book != null and book.title != null}">
-                                        <a sec:authorize="isAuthenticated()" th:href="@{'/user/book/' + ${book.id}}" class="text-decoration-none" th:text="${book.title}">Book Title</a>
-                                        <a sec:authorize="!isAuthenticated()" th:href="@{'/book/' + ${book.id}}" class="text-decoration-none" th:text="${book.title}">Book Title</a>
+                                    <h6 class="mb-1">
+                                        <a th:href="@{${#authorization.expression('isAuthenticated()')} ? '/user/book/' + ${book.id} : '/book/' + ${book.id}}"
+                                            class="text-decoration-none" th:text="${book.title}">Tên sách</a>
                                     </h6>
-                                    <!-- Đánh giá sao -->
-                                    <div class="rating-stars mb-2" th:if="${book != null and book.averageRating != null}">
+                                    <div class="rating-stars mb-2" th:if="${book.averageRating != null}">
                                         <th:block th:with="rating=${book.averageRating}">
                                             <i th:each="i : ${#numbers.sequence(1, 5)}"
                                                 th:class="${i <= rating ? 'fas' : (i <= rating + 0.5 ? 'fas' : 'far')} + ' fa-star'"
                                                 style="color: #fbbf24;"></i>
                                         </th:block>
                                         <span class="text-muted ms-2"
-                                            th:text="'(' + ${book.averageRating} + ' / ' + ${book.reviewCount != null ? book.reviewCount : 0} + ' đánh giá)'"></span>
+                                            th:text="'(' + ${book.averageRating} + ' / ' + (${book.reviewCount != null ? book.reviewCount : 0}) + ' đánh giá)'">(0
+                                            đánh giá)</span>
                                     </div>
-                                    <!-- Giá và nút thêm vào giỏ hàng -->
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="price" th:if="${book != null and book.price != null}" 
-                                              th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
-                                            200,000 VNĐ
-                                        </span>
-                                        <button sec:authorize="isAuthenticated()" th:if="${book != null}" class="btn cart-btn" th:onclick="'addToCart(' + ${book.id} + ', 1)'" title="Thêm vào giỏ hàng">
+                                        <span class="price" th:if="${book.price != null}"
+                                            th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">100.000
+                                            VNĐ</span>
+                                        <button sec:authorize="isAuthenticated()" class="btn cart-btn"
+                                            th:onclick="'addToCart(' + ${book.id} + ', 1)'" title="Thêm vào giỏ hàng">
                                             <i class="fa-solid fa-cart-plus"></i>
                                         </button>
                                         <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn cart-btn">
-                                            <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập để mua hàng
+                                            <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
                                         </a>
                                     </div>
                                 </div>
@@ -233,83 +172,9 @@
     </div>
 
     <th:block th:replace="~{index :: footer}"></th:block>
-    <!-- Include các script từ frame.html -->
-
     <script th:src="@{/js/cart.js}"></script>
     <script th:src="@{/js/wishlist.js}"></script>
     <script th:src="@{/js/search_book.js}"></script>
-
-    <!-- Thêm script xử lý format giá -->
-    <script>
-        function formatPrice(number) {
-            // Xóa tất cả dấu phẩy hiện có
-            number = number.replace(/,/g, '');
-            // Định dạng số với dấu phẩy sau mỗi 3 chữ số từ phải sang
-            return number.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-
-        function unformatPrice(formattedNumber) {
-            return formattedNumber.replace(/,/g, '');
-        }
-
-        document.querySelectorAll('input[name="minPrice"], input[name="maxPrice"]').forEach(input => {
-            input.addEventListener('input', function(e) {
-                // Chỉ giữ lại số
-                let value = this.value.replace(/\D/g, '');
-                // Format số với dấu phẩy
-                this.value = formatPrice(value);
-            });
-        });
-
-        document.getElementById('filterForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            let minPriceInput = this.querySelector('input[name="minPrice"]');
-            let maxPriceInput = this.querySelector('input[name="maxPrice"]');
-            
-            // Xóa dấu phẩy trước khi submit
-            minPriceInput.value = unformatPrice(minPriceInput.value);
-            maxPriceInput.value = unformatPrice(maxPriceInput.value);
-            
-            this.submit();
-        });
-
-        function formatNumberInput(input) {
-            let value = input.value.replace(/[^\d]/g, '');
-            if (value) {
-                value = parseInt(value).toLocaleString('en-US');
-                input.value = value;
-            }
-            return value;
-        }
-
-        document.querySelectorAll('.formatted-number').forEach(input => {
-            input.addEventListener('input', function() {
-                formatNumberInput(this);
-                // Update hidden field
-                let hiddenField = this.name === 'rawMinPrice' ? 
-                    document.querySelector('input[name="minPrice"]') :
-                    document.querySelector('input[name="maxPrice"]');
-                hiddenField.value = this.value.replace(/,/g, '');
-            });
-        });
-
-        // Xử lý nút sắp xếp
-        function updateSort(sortBy, newSortDir) {
-            document.querySelector('input[name="sortBy"]').value = sortBy;
-            document.querySelector('input[name="sortDir"]').value = newSortDir;
-            document.getElementById('filterForm').submit();
-        }
-
-        // Thêm event handlers cho các nút sắp xếp
-        document.querySelectorAll('[data-sort]').forEach(button => {
-            button.addEventListener('click', function() {
-                const sortBy = this.dataset.sort;
-                const currentSortDir = document.querySelector('input[name="sortDir"]').value;
-                const newSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
-                updateSort(sortBy, newSortDir);
-            });
-        });
-    </script>
 </body>
 
 </html>

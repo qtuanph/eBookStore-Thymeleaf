@@ -53,22 +53,15 @@
                         <div class="row">
                             <!-- Avatar -->
                             <div class="col-md-3 text-center mb-4">
-                                <div class="position-relative">
-                                     <!-- Nếu có avatar -->
-                                     <img th:if="${user.avatar != null and !#strings.isEmpty(user.avatar)}"
-                                        th:src="@{'/image/avatar/' + ${user.avatar}}"
-                                        class="rounded-circle img-thumbnail"
-                                        style="width: 150px; height: 150px; object-fit: cover;" 
-                                        alt="Avatar" />
-
-                                    <!-- Nếu không có avatar -->
-                                    <img th:unless="${user.avatar != null and !#strings.isEmpty(user.avatar)}"
-                                        th:src="@{/image/avatar/default-avatar.jpg}"
-                                        class="rounded-circle img-thumbnail"
-                                        style="width: 150px; height: 150px; object-fit: cover;" 
-                                        alt="Default Avatar" />
+                                <div class="position-relative" style="width: 150px; height: 150px; margin: 0 auto;">
+                                    <img th:src="${user.avatar != null and !#strings.isEmpty(user.avatar)} ? @{'/image/avatar/' + ${user.avatar}} : @{/image/avatar/default-avatar.jpg}"
+                                        alt="Avatar"
+                                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 2px solid #ddd; box-shadow: 0 0 8px rgba(0,0,0,0.1); transition: transform 0.3s ease;"
+                                        onmouseover="this.style.transform='scale(1.05)'"
+                                        onmouseout="this.style.transform='scale(1)'" />
                                 </div>
                             </div>
+
                             <!-- User Details -->
                             <div class="col-md-9">
                                 <div class="row mb-3">
@@ -399,26 +392,25 @@
         });
 
         // Thêm function để cập nhật avatar
-        function updateAvatarDisplay(avatarUrl) {
+        function updateAvatarDisplay(avatarFileName) {
             const avatarContainer = document.querySelector('.position-relative');
-            if (avatarContainer) {
-                if (avatarUrl) {
-                    // Nếu có avatar mới, cập nhật hoặc tạo mới img tag
-                    let avatarImg = avatarContainer.querySelector('img');
-                    if (!avatarImg) {
-                        // Nếu chưa có img tag (đang hiển thị icon), tạo mới
-                        avatarContainer.innerHTML = ''; // Xóa icon cũ
-                        avatarImg = document.createElement('img');
-                        avatarImg.className = 'rounded-circle img-thumbnail';
-                        avatarImg.style = 'width: 150px; height: 150px; object-fit: cover;';
-                        avatarImg.alt = 'Avatar';
-                        avatarContainer.appendChild(avatarImg);
-                    }
-                    // Thêm timestamp để tránh cache
-                    avatarImg.src = avatarUrl + '?t=' + new Date().getTime();
+            if (avatarContainer && avatarFileName) {
+                let avatarImg = avatarContainer.querySelector('img');
+                const avatarUrl = '/image/avatar/' + avatarFileName;
+
+                if (!avatarImg) {
+                    avatarImg = document.createElement('img');
+                    avatarImg.className = 'rounded-circle img-thumbnail';
+                    avatarImg.style = 'width: 150px; height: 150px; object-fit: cover;';
+                    avatarImg.alt = 'Avatar';
+                    avatarContainer.innerHTML = '';
+                    avatarContainer.appendChild(avatarImg);
                 }
+
+                avatarImg.src = avatarUrl + '?t=' + new Date().getTime();
             }
         }
+
 
         // Thêm hàm để reload trang 2 lần
         function reloadTwice() {

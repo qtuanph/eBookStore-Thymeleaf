@@ -84,7 +84,7 @@ public class WebSecurityConfig {
                 .usernameParameter("email")
                 .passwordParameter("password")
                 // Thay đổi phần này để xử lý redirect dựa trên role
-                .successHandler((_, response, authentication) -> {
+                .successHandler((request, response, authentication) -> {
                     if (authentication.getAuthorities().stream()
                             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                         response.sendRedirect("/admin/dashboard");

@@ -147,7 +147,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Page<Coupon> searchCoupons(String search, String type, String status, Pageable pageable) {
-        Specification<Coupon> spec = (root, _, cb) -> {
+        Specification<Coupon> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (search != null && !search.trim().isEmpty()) {

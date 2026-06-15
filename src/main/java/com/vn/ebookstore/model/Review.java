@@ -23,11 +23,9 @@ public class Review {
 
     private String comment;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", insertable = false, updatable = false)
     private Date createdAt;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at", insertable = false, updatable = false)
     private Date updatedAt;
 
